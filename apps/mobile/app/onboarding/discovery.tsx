@@ -170,6 +170,7 @@ export default function DiscoveryScreen() {
           onPress={startScan}
         />
         <Button
+          testID="connect-manually"
           label={t('onboarding.manualPair')}
           variant="secondary"
           leftIcon="link"

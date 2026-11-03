@@ -124,6 +124,7 @@ export class TavernAdapter {
         else toggle.click();
       }
     }
+    window.dispatchEvent(new CustomEvent('stc-panel', { detail: null }));
   }
   async leave(stop: boolean): Promise<void> {
     if (this.module.isGenerating()) {

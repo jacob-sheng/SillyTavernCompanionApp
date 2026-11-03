@@ -80,7 +80,6 @@ async function boot(config: BootConfig) {
         else {
           if (command.type === 'back' && document.querySelector('#top-settings-holder .openDrawer')) {
             await adapter.closePanels();
-            window.dispatchEvent(new CustomEvent('stc-panel', { detail: null }));
             return;
           }
           if (dirty && !window.confirm(strings.unsavedConfirm)) throw new Error('unsaved');

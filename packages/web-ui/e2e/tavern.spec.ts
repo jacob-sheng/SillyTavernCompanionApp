@@ -73,6 +73,11 @@ test('new chat is created once and navigation preserves an existing iframe', asy
   expect(await page.evaluate(() => document.getElementById('test-frame') === (window as any).retainedFrame)).toBe(true);
   await page.getByRole('button', { name: '关闭', exact: true }).first().click({ timeout: 5000 });
   await expect(page.locator('#WorldInfo')).toBeHidden();
+  await navigate(page, 'settings-before-return', { kind: 'panel', panel: 'settings' });
+  await navigate(page, 'retained-return', { kind: 'character', avatar, action: 'continue' });
+  const name = await page.evaluate(() => { const ctx = (window as any).SillyTavern.getContext(); return ctx.characters[Number(ctx.characterId)].name; });
+  await expect(page.locator('#stc-root .stc-heading strong')).toHaveText(name);
+  expect(await page.evaluate(() => document.getElementById('test-frame') === (window as any).retainedFrame)).toBe(true);
   await page.screenshot({ path: '../../.cache/web-ui-chat.png' });
 });
 test('settings section navigation keeps bound controls and existing values', async ({ page }) => {
@@ -174,6 +179,18 @@ test('sampling preset changes survive save-as and JSON export', async ({ page })
   await expect.poll(() => page.evaluate(() => (window as any).messages.find((message: any) => message.type === 'exportFile'))).toMatchObject({ name: `${name}.json` });
   const exported = await page.evaluate(() => (window as any).messages.find((message: any) => message.type === 'exportFile'));
   expect(JSON.parse(Buffer.from(exported.base64, 'base64').toString('utf8')).temperature).toBe(0.73);
+});
+test('persona description edits persist through the original settings handler', async ({ page }) => {
+  await load(page);
+  await navigate(page, 'persona-editor', { kind: 'panel', panel: 'personas' });
+  const description = `用户身份 fixture ${Date.now()}`;
+  await page.locator('#persona_description').fill(description);
+  await expect.poll(() => page.evaluate(async () => {
+    const ctx = (window as any).SillyTavern.getContext();
+    const response = await fetch('/api/settings/get', { method: 'POST', headers: ctx.getRequestHeaders(), body: '{}' });
+    if (!response.ok) return null;
+    return JSON.parse((await response.json()).settings).power_user.persona_description;
+  })).toBe(description);
 });
 test('retained group navigation discovers new groups and rejects deleted groups', async ({ page }) => {
   await load(page);

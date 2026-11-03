@@ -73,8 +73,9 @@ try {
   await setup.close();
   for (const port of [8081, 8191, 8193]) adb('reverse', `tcp:${port}`, `tcp:${port}`);
   adb('shell', 'am', 'start', '-W', '-n', `${app}/.MainActivity`);
-  await delay(3000);
-  openRoute('onboarding/manual');
+  // Cold debug startup downloads the JS bundle. A deep link sent before the
+  // router mounts can be replaced by its initial discovery redirect.
+  await tapId('connect-manually');
   await fill('server-url', 'http://127.0.0.1:8191');
   await fill('server-username', 'fixture');
   await fill('server-password', 'wrong-password');
