@@ -13,7 +13,7 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppText } from './AppText';
 import { Icon, type IconName } from '@/theme/icons';
-import { colors } from '@/theme/tokens';
+import { useThemeColors } from '@/theme/useThemeColors';
 import { durations, springs, useReducedMotion } from '@/theme/motion';
 import { haptics } from '@/theme/haptics';
 
@@ -36,6 +36,7 @@ export function Sheet({
   title?: string;
   children: ReactNode;
 }) {
+  const colors = useThemeColors();
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const reduced = useReducedMotion();
@@ -149,6 +150,7 @@ export function SheetActionRow({
   onPress: () => void;
   destructive?: boolean;
 }) {
+  const colors = useThemeColors();
   return (
     <Pressable
       accessibilityRole="button"

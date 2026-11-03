@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { View, type DimensionValue } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
 import { useReducedMotion } from '@/theme/motion';
-import { colors } from '@/theme/tokens';
+import { useThemeColors } from '@/theme/useThemeColors';
 
 /** A single shimmering placeholder block. */
 export function Skeleton({
@@ -14,6 +14,7 @@ export function Skeleton({
   height?: number;
   radius?: number;
 }) {
+  const colors = useThemeColors();
   const opacity = useSharedValue(0.5);
   const reduced = useReducedMotion();
   useEffect(() => {

@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { flushSync } from 'react-dom';
 import { SettingsNavigation } from './SettingsNavigation';
 import css from './style.css';
+import { themeCss } from './theme';
 import { TavernAdapter, CommandQueue, click, type TavernContext, type TavernModule } from './adapter';
 import { parseCommand, type BootConfig, type Panel, type WebMessage } from './protocol';
 import en from '../../../apps/mobile/src/i18n/locales/en.json';
@@ -115,7 +116,7 @@ async function boot(config: BootConfig) {
     if (!config.original) {
       document.documentElement.classList.add('stc-modern');
       document.documentElement.dataset.stcTheme = config.theme;
-      const style = document.createElement('style'); style.id = 'stc-style'; style.textContent = css; document.head.append(style);
+      const style = document.createElement('style'); style.id = 'stc-style'; style.textContent = themeCss + css; document.head.append(style);
       const host = document.createElement('div'); host.id = 'stc-root'; document.body.append(host);
       const updateViewport = () => document.documentElement.style.setProperty('--stc-height', `${window.visualViewport?.height ?? innerHeight}px`);
       window.visualViewport?.addEventListener('resize', updateViewport); updateViewport();

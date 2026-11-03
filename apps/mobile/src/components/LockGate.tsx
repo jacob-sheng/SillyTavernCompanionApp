@@ -6,7 +6,7 @@ import { addScreenOffListener, setSecureWindow } from '../../modules/screen-stat
 import { usePrefs } from '@/stores/prefsStore';
 import { AppText, Button } from '@/components/ui';
 import { Icon } from '@/theme/icons';
-import { colors } from '@/theme/tokens';
+import { useThemeColors } from '@/theme/useThemeColors';
 
 /**
  * Optional app lock: biometric prompt with system fallback to the device credential
@@ -19,6 +19,7 @@ import { colors } from '@/theme/tokens';
  * it. Until prefs hydrate we show an opaque brand cover instead of flashing content.
  */
 export function LockGate() {
+  const colors = useThemeColors();
   const { t } = useTranslation();
   const appLock = usePrefs((s) => s.appLock);
   const appLockTimer = usePrefs((s) => s.appLockTimer);

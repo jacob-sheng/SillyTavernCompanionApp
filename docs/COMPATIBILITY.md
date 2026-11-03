@@ -26,8 +26,16 @@ Use system-trusted TLS; there is no certificate bypass.
 Browser tests use the actual pinned SillyTavern and a local deterministic OpenAI-compatible
 streaming server. They cover all main editor entry points, retained DOM/iframe identity,
 new-chat deduplication, streaming generation, save/return, original mode and unknown versions.
+An unused card emits CHAT_CREATED once; group navigation refreshes the server list. Stop/return
+waits for pending asynchronous upstream generation/message events before verifying saved metadata.
+Light editor contrast and settings-section navigation are checked against real bound controls.
 Unit tests cover bridge validation, command queues, navigation failures and native request state.
 Existing connection, localization, storage and core tests remain part of CI.
+
+WSL2 Debian validation on 2026-11-03: 487 unit tests, 9 browser tests including the fixed plugin
+fixture, typecheck and mobile lint passed. Android Hermes asset export passed after repairing
+the Tailwind palette import. Run 41641293690 built/installed the debug APK but failed before
+the connection screen because Metro did not start. It provides no Android auth acceptance.
 
 Optional plugin smoke fixture:
 

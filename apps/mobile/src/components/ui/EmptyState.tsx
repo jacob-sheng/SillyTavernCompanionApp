@@ -2,7 +2,7 @@ import { View } from 'react-native';
 import { AppText } from './AppText';
 import { Button } from './Button';
 import { Icon, type IconName } from '@/theme/icons';
-import { colors } from '@/theme/tokens';
+import { useThemeColors } from '@/theme/useThemeColors';
 
 /** Friendly empty/zero-data state: glyph, title, message, optional CTA. */
 export function EmptyState({
@@ -20,6 +20,7 @@ export function EmptyState({
   actionIcon?: IconName;
   onAction?: () => void;
 }) {
+  const colors = useThemeColors();
   return (
     <View className="flex-1 items-center justify-center px-10">
       <View className="mb-4 h-16 w-16 items-center justify-center rounded-full bg-surface-2">

@@ -15,13 +15,14 @@ import { discoverInstances } from '@/lib/discovery';
 import { useConnection } from '@/stores/connectionStore';
 import { Screen, AppText, Button, ListRow, Badge } from '@/components/ui';
 import { Icon } from '@/theme/icons';
-import { colors } from '@/theme/tokens';
+import { useThemeColors } from '@/theme/useThemeColors';
 import { easeOut, useReducedMotion } from '@/theme/motion';
 import { haptics } from '@/theme/haptics';
 import { useBottomInset } from '@/theme/insets';
 
 /** A radar-style ping behind the brand mark while the network is being scanned. */
 function ScanPulse({ label }: { label: string }) {
+  const colors = useThemeColors();
   const reduced = useReducedMotion();
   const p = useSharedValue(0);
   useEffect(() => {
@@ -58,6 +59,7 @@ function ScanPulse({ label }: { label: string }) {
 }
 
 export default function DiscoveryScreen() {
+  const colors = useThemeColors();
   const { t } = useTranslation();
   const servers = useServers((s) => s.servers);
   const { reconnectTo, busyId } = useServerConnect();

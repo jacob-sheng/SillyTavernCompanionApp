@@ -3,7 +3,8 @@ import { useState } from 'react';
 import { Pressable, TextInput, View, type TextInputProps } from 'react-native';
 import { AppText } from './AppText';
 import { Icon } from '@/theme/icons';
-import { colors, fonts, hitSlop } from '@/theme/tokens';
+import { fonts, hitSlop } from '@/theme/tokens';
+import { useThemeColors } from '@/theme/useThemeColors';
 
 export interface FieldProps extends Omit<TextInputProps, 'style' | 'placeholderTextColor'> {
   label?: string;
@@ -15,6 +16,7 @@ export interface FieldProps extends Omit<TextInputProps, 'style' | 'placeholderT
 
 /** Labeled text input with helper/error text and an optional password toggle. */
 export function Field({ label, helper, error, password = false, ...input }: FieldProps) {
+  const colors = useThemeColors();
   const { t } = useTranslation();
   const [hidden, setHidden] = useState(true);
   const showToggle = password;

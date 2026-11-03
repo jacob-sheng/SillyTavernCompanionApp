@@ -11,7 +11,8 @@ import { useConnection } from '@/stores/connectionStore';
 import { Avatar } from '@/components/Avatar';
 import { Screen, Header, Card, Chip, AppText, Button, SkeletonList, EmptyState, IconButton } from '@/components/ui';
 import { Icon } from '@/theme/icons';
-import { colors, fonts } from '@/theme/tokens';
+import { fonts } from '@/theme/tokens';
+import { useThemeColors } from '@/theme/useThemeColors';
 
 const CharacterCard = memo(function CharacterCard({ character }: { character: StCharacter }) {
   const { t } = useTranslation();
@@ -51,6 +52,7 @@ const CharacterCard = memo(function CharacterCard({ character }: { character: St
 });
 
 export default function CharactersScreen() {
+  const colors = useThemeColors();
   const { t } = useTranslation();
   const client = useConnection((s) => s.client);
   const [query, setQuery] = useState('');

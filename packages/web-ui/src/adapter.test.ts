@@ -48,6 +48,21 @@ describe('Tavern navigation', () => {
     await expect(adapter.leave(false)).rejects.toThrow('unsaved');
     expect(ctx.saveChat).not.toHaveBeenCalled();
   });
+  it('waits for asynchronous stop listeners before saving their metadata', async () => {
+    ctx.eventTypes.GENERATION_STOPPED = 'stopped';
+    let finish!: () => void;
+    ctx.eventSource.emit = vi.fn(() => new Promise<void>(resolve => { finish = () => { ctx.chatMetadata = { pluginDone: true }; resolve(); }; }));
+    module.isGenerating = () => true;
+    ctx.stopGeneration = () => { module.isGenerating = () => false; void ctx.eventSource.emit!('stopped'); };
+    vi.mocked(fetch).mockResolvedValue({ ok: true, json: async () => [{ chat_metadata: { pluginDone: true } }] } as Response);
+    adapter = new TavernAdapter(() => ctx, module);
+    const leaving = adapter.leave(true);
+    await Promise.resolve();
+    expect(ctx.saveChat).not.toHaveBeenCalled();
+    finish();
+    await leaving;
+    expect(ctx.saveChat).toHaveBeenCalledOnce();
+  });
   it('never replays a failed potentially mutating command', async () => {
     const queue = new CommandQueue();
     const mutate = vi.fn(async () => { throw new Error('disconnected'); });

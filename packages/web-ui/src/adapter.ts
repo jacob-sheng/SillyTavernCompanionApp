@@ -5,7 +5,7 @@ export interface TavernContext {
   characterId?: number | string; groupId?: string; chat: unknown[];
   chatMetadata?: Record<string, unknown>;
   eventTypes: Record<string, string>;
-  eventSource: { on: (event: string, fn: (...args: unknown[]) => void) => void; removeListener: (event: string, fn: (...args: unknown[]) => void) => void };
+  eventSource: { on: (event: string, fn: (...args: unknown[]) => void) => void; removeListener: (event: string, fn: (...args: unknown[]) => void) => void; emit?: (event: string, ...args: unknown[]) => Promise<unknown> };
   selectCharacterById: (id: number, options?: { switchMenu: boolean }) => Promise<void>;
   openCharacterChat: (file: string) => Promise<void>;
   openGroupChat: (id: string, file?: string) => Promise<void>;
@@ -26,10 +26,29 @@ export function click(selector: string): void {
   node.click();
 }
 export class TavernAdapter {
-  constructor(readonly context: () => TavernContext, readonly module: TavernModule) {}
+  private pendingEvents = 0;
+  constructor(readonly context: () => TavernContext, readonly module: TavernModule) {
+    const { eventSource, eventTypes } = context();
+    const original = eventSource.emit;
+    if (original) {
+      const tracked = new Set(['GENERATION_STOPPED', 'GENERATION_ENDED', 'MESSAGE_RECEIVED', 'MESSAGE_EDITED', 'MESSAGE_DELETED', 'MESSAGE_SWIPED'].map(name => eventTypes[name]).filter(Boolean));
+      const adapter = this;
+      // Upstream does not await every emit. Observe its existing promise without
+      // changing listener order, return value or dispatching duplicate events.
+      eventSource.emit = function (event, ...args) {
+        if (!tracked.has(event)) return original.call(this, event, ...args);
+        adapter.pendingEvents++;
+        try {
+          const result = original.call(this, event, ...args);
+          void Promise.resolve(result).then(() => { adapter.pendingEvents--; }, () => { adapter.pendingEvents--; });
+          return result;
+        } catch (error) { adapter.pendingEvents--; throw error; }
+      };
+    }
+  }
   async idle(timeout = 15000): Promise<void> {
     const start = Date.now();
-    while (this.module.isGenerating() || this.module.isChatSaving) {
+    while (this.module.isGenerating() || this.module.isChatSaving || this.pendingEvents > 0) {
       if (Date.now() - start > timeout) throw new Error('busy');
       await new Promise(r => setTimeout(r, 100));
     }

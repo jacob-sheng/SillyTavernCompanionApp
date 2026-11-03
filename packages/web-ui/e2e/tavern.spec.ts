@@ -132,6 +132,20 @@ test('real streaming generation saves before returning home', async ({ page }) =
   await page.evaluate(() => (window as any).__STC_RECEIVE__({ version: 1, session: 'test', id: 'save-home', type: 'leave' }));
   await expect.poll(() => page.evaluate(() => (window as any).messages.find((m: any) => m.type === 'navigationResult' && m.id === 'save-home'))).toMatchObject({ ok: true });
   await expect.poll(() => page.evaluate(() => (window as any).messages)).toContainEqual(expect.objectContaining({ type: 'openNativeHome' }));
+  // Continue in the same retained page, with a plugin that finishes asynchronously.
+  await page.evaluate(() => {
+    const ctx = (window as any).SillyTavern.getContext();
+    ctx.eventSource.on(ctx.eventTypes.GENERATION_STOPPED, async () => {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      ctx.chatMetadata.stcStopFinished = true;
+    });
+  });
+  await page.locator('#send_textarea').fill('STC slow stop fixture');
+  await page.locator('#send_but').click();
+  await expect(page.locator('#chat .mes_text').last()).toContainText('Fixture', { timeout: 30000 });
+  await page.evaluate(() => (window as any).__STC_RECEIVE__({ version: 1, session: 'test', id: 'stop-save-home', type: 'stopAndLeave' }));
+  await expect.poll(() => page.evaluate(() => (window as any).messages.find((m: any) => m.type === 'navigationResult' && m.id === 'stop-save-home'))).toMatchObject({ ok: true });
+  expect(await page.evaluate(() => (window as any).SillyTavern.getContext().chatMetadata.stcStopFinished)).toBe(true);
 });
 test('unknown modern versions fail closed without hiding the original page', async ({ page }) => {
 

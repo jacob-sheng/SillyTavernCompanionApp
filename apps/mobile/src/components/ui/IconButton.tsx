@@ -1,6 +1,7 @@
 import { PressableScale } from './animated';
 import { Icon, type IconName } from '@/theme/icons';
-import { colors, hitSlop, iconSize } from '@/theme/tokens';
+import { hitSlop, iconSize } from '@/theme/tokens';
+import { useThemeColors } from '@/theme/useThemeColors';
 import { haptics } from '@/theme/haptics';
 
 export interface IconButtonProps {
@@ -23,12 +24,13 @@ export function IconButton({
   onPress,
   accessibilityLabel,
   size = 'md',
-  color = colors.textMuted,
+  color,
   active = false,
   surface = false,
   disabled = false,
   haptic = true,
 }: IconButtonProps) {
+  const colors = useThemeColors();
   return (
     <PressableScale
       scaleTo={0.9}
@@ -43,7 +45,7 @@ export function IconButton({
       }}
       className={`h-11 w-11 items-center justify-center rounded-full ${surface ? 'bg-surface-2 active:bg-surface-3' : 'active:bg-surface-2'} ${disabled ? 'opacity-30' : ''}`}
     >
-      <Icon name={name} size={iconSize[size]} color={active ? colors.accent : color} />
+      <Icon name={name} size={iconSize[size]} color={active ? colors.accent : color ?? colors.textMuted} />
     </PressableScale>
   );
 }

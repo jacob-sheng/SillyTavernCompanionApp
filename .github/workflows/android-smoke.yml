@@ -31,6 +31,8 @@ jobs:
           distribution: temurin
           java-version: 21
       - uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: false
       - run: pnpm install --frozen-lockfile
       - run: pnpm -r typecheck && pnpm --filter mobile lint
       - run: pnpm --filter mobile exec expo export --platform android --max-workers 2 --output-dir ../../.cache/android-export
@@ -97,4 +99,8 @@ jobs:
             .cache/android-smoke
             .cache/metro.log
             .cache/tavern.log
-            apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: android-hybrid-debug-apk
+          path: apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk

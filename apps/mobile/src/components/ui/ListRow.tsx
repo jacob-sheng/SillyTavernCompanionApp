@@ -3,7 +3,7 @@ import { View } from 'react-native';
 import { PressableScale } from './animated';
 import { AppText } from './AppText';
 import { Icon } from '@/theme/icons';
-import { colors } from '@/theme/tokens';
+import { useThemeColors } from '@/theme/useThemeColors';
 import { haptics } from '@/theme/haptics';
 
 /**
@@ -36,6 +36,7 @@ export function ListRow({
   onLongPress?: () => void;
   haptic?: boolean;
 }) {
+  const colors = useThemeColors();
   return (
     <PressableScale
       scaleTo={0.985}

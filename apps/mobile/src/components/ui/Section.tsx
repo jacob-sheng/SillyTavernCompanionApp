@@ -2,9 +2,10 @@ import { type ReactNode } from 'react';
 import { View } from 'react-native';
 import { AppText } from './AppText';
 import { Icon, type IconName } from '@/theme/icons';
-import { colors } from '@/theme/tokens';
+import { useThemeColors } from '@/theme/useThemeColors';
 
 export function SectionHeader({ title, icon }: { title: string; icon?: IconName }) {
+  const colors = useThemeColors();
   return (
     <View className="mb-2 mt-6 flex-row items-center gap-2 px-1">
       {icon ? <Icon name={icon} size={14} color={colors.textSubtle} /> : null}

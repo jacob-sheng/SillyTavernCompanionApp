@@ -57,6 +57,19 @@ export default function SettingsScreen() {
       </Section>
       <Section title={t('lock.title')}>
         <Card className="flex-row items-center justify-between p-4"><AppText>{t('lock.title')}</AppText><Switch accessibilityLabel={t('lock.title')} value={prefs.appLock} onValueChange={on => void toggleLock(on)} /></Card>
+        <AppText color="muted">{t('settings.appLockSubtitle')}</AppText>
+        {prefs.appLock && <>
+          <Card className="flex-row items-center justify-between p-4 gap-3">
+            <View style={{ flex: 1 }}><AppText>{t('settings.appLockTimer')}</AppText><AppText variant="caption" color="muted">{t('settings.appLockTimerSubtitle')}</AppText></View>
+            <Switch accessibilityLabel={t('settings.appLockTimer')} value={prefs.appLockTimer} onValueChange={prefs.setAppLockTimer} />
+          </Card>
+          {prefs.appLockTimer && <View style={{ gap: 8 }}>
+            <AppText>{t('settings.appLockMinutes')}</AppText>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+              {Array.from(new Set([1, 5, 15, 30, prefs.appLockMinutes])).sort((a, b) => a - b).map(minutes => <Button key={minutes} label={String(minutes)} fullWidth={false} variant={minutes === prefs.appLockMinutes ? 'primary' : 'secondary'} onPress={() => prefs.setAppLockMinutes(minutes)} />)}
+            </View>
+          </View>}
+        </>}
       </Section>
       <Section title={t('settings.savedServers')}>
         {servers.map(server => <Card key={server.id} className="p-4 gap-2">

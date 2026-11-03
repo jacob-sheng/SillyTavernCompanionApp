@@ -8,10 +8,11 @@ import { fetchLike } from '@/lib/expoFetch';
 import { useConnection } from '@/stores/connectionStore';
 import { useServers } from '@/stores/serversStore';
 import { AppText, Button, Field } from '@/components/ui';
-import { colors } from '@/theme/tokens';
+import { useThemeColors } from '@/theme/useThemeColors';
 import { haptics } from '@/theme/haptics';
 
 export default function ManualScreen() {
+  const colors = useThemeColors();
   const { t } = useTranslation();
   const activate = useConnection((s) => s.activate);
   const { serverId } = useLocalSearchParams<{ serverId?: string }>();

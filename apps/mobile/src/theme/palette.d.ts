@@ -22,3 +22,4 @@ export const palette: {
 };
 
 export const radii: { field: number; card: number; sheet: number; pill: number };
+export const lightPalette: typeof palette;
