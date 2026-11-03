@@ -92,6 +92,26 @@ test('original mode keeps the original page and still offers the bridge', async 
   await expect(page.locator('#stc-root')).toHaveCount(0);
   await navigate(page, 'extensions', { kind: 'panel', panel: 'extensions' });
 });
+test('character edits and JSON exports use the original bound form', async ({ page }) => {
+  await load(page);
+  const avatar = await page.evaluate(() => (window as any).SillyTavern.getContext().characters[0].avatar);
+  await navigate(page, 'edit-export', { kind: 'character', avatar, action: 'edit' });
+  const description = `中文 description # ${Date.now()}`;
+  await page.locator('#description_textarea').fill(description);
+  await page.locator('div#export_button').click();
+  await page.locator('.export_format[data-format="json"]').click();
+  await expect.poll(() => page.evaluate(() => (window as any).messages.find((message: any) => message.type === 'exportFile'))).toMatchObject({ name: expect.stringMatching(/\.json$/) });
+  const exported = await page.evaluate(() => (window as any).messages.find((message: any) => message.type === 'exportFile'));
+  const card = JSON.parse(Buffer.from(exported.base64, 'base64').toString('utf8'));
+  expect(card.data.description).toBe(description);
+  const persisted = await page.evaluate(async avatar => {
+    const ctx = (window as any).SillyTavern.getContext();
+    const result = await fetch('/api/characters/get', { method: 'POST', headers: ctx.getRequestHeaders(), body: JSON.stringify({ avatar_url: avatar }) });
+    if (!result.ok) throw new Error('readback failed');
+    return result.json();
+  }, avatar);
+  expect(persisted.description).toBe(description);
+});
 test('retained group navigation discovers new groups and rejects deleted groups', async ({ page }) => {
   await load(page);
   const groupId = await page.evaluate(async () => {

@@ -50,7 +50,7 @@ jobs:
           (cd .cache/SillyTavern && node server.js --port 8190 --browserLaunchEnabled false > ../tavern.log 2>&1) &
           node packages/web-ui/e2e/model-server.mjs > .cache/model.log 2>&1 &
           node scripts/android/hostile-server.mjs > .cache/hostile.log 2>&1 &
-          pnpm --filter mobile start --host localhost > .cache/metro.log 2>&1 &
+          NODE_OPTIONS=--dns-result-order=ipv4first pnpm --filter mobile start --host localhost --max-workers 2 > .cache/metro.log 2>&1 &
           HASH=$(docker run --rm caddy:2.11.7 caddy hash-password --plaintext stc-fixture-password)
           cat > .cache/Caddyfile <<EOF
           {
