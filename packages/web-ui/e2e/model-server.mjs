@@ -9,7 +9,10 @@ createServer(async (req, res) => {
   let body = ''; for await (const chunk of req) body += chunk;
   const input = JSON.parse(body);
   const slow = input.messages?.some(message => String(message.content).includes('STC slow stop fixture'));
-  const content = 'Fixture response. The stream completed successfully.';
+  const lastUser = [...(input.messages ?? [])].reverse().find(message => message.role === 'user');
+  const content = String(lastUser?.content).includes('STC MVU update')
+    ? "Fixture MVU update. <UpdateVariable>_.set('health', 13, 17);</UpdateVariable>"
+    : 'Fixture response. The stream completed successfully.';
   if (!input.stream) {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     return res.end(JSON.stringify({ choices: [{ message: { role: 'assistant', content }, finish_reason: 'stop' }] }));

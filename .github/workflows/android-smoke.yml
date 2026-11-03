@@ -37,9 +37,22 @@ jobs:
       - run: pnpm -r typecheck && pnpm --filter mobile lint
       - run: pnpm --filter mobile exec expo export --platform android --max-workers 2 --output-dir ../../.cache/android-export
       - run: pnpm --filter mobile prebuild --platform android
+      # Debug JS comes from the current checkout's Metro. Reuse the APK only when
+      # every native dependency/config/module/asset input is unchanged.
+      - uses: actions/cache/restore@v4
+        id: debug-apk
+        with:
+          path: apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk
+          key: ${{ runner.os }}-hybrid-debug-x86_64-v1-${{ hashFiles('pnpm-lock.yaml', 'package.json', 'apps/mobile/package.json', 'apps/mobile/app.config.ts', 'apps/mobile/plugins/**', 'apps/mobile/modules/**', 'apps/mobile/assets/**', 'patches/**') }}
       - name: Build debug APK (no release signing secrets)
+        if: steps.debug-apk.outputs.cache-hit != 'true'
         working-directory: apps/mobile/android
         run: chmod +x gradlew && ./gradlew :app:assembleDebug -PreactNativeArchitectures=x86_64 --max-workers=2
+      - uses: actions/cache/save@v4
+        if: steps.debug-apk.outputs.cache-hit != 'true'
+        with:
+          path: apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk
+          key: ${{ steps.debug-apk.outputs.cache-primary-key }}
       - run: pnpm --filter @st/web-ui exec playwright install --with-deps chromium
       - name: Prepare isolated test services
         run: |

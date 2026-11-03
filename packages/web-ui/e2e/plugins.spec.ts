@@ -47,4 +47,37 @@ test('Tavern Helper and pinned MVU update per-message variables under the modern
   await page.evaluate(() => (window as any).__STC_RECEIVE__({ version: 1, session: 'plugins', id: 'plugin-home', type: 'leave' }));
   await expect.poll(() => page.evaluate(() => (window as any).messages)).toContainEqual(expect.objectContaining({ type: 'openNativeHome' }));
   expect(await page.evaluate(() => (window as any).Mvu.getMvuData({ type: 'message', message_id: 0 }).stat_data.health)).toBe(13);
+  await page.evaluate(async () => {
+    const st = await import('/script.js');
+    const api = await import('/scripts/openai.js');
+    st.changeMainAPI('openai');
+    Object.assign(api.oai_settings, { chat_completion_source: 'custom', custom_url: 'http://127.0.0.1:8192/v1', custom_model: 'fixture', stream_openai: true });
+    (window as any).$('#chat_completion_source').val('custom').trigger('change');
+    (window as any).$('#custom_api_url_text').val('http://127.0.0.1:8192/v1').trigger('input');
+    (window as any).$('#custom_model_id').val('fixture').trigger('input');
+    (document.querySelector('#api_button_openai') as HTMLElement).click();
+  });
+  await page.waitForFunction(async () => (await import('/script.js')).online_status !== 'no_connection');
+  await page.locator('#send_textarea').fill('STC MVU update');
+  await page.locator('#send_but').click();
+  await expect.poll(() => page.evaluate(() => (window as any).Mvu.getMvuData({ type: 'message', message_id: -1 })?.stat_data?.health), { timeout: 30000 }).toBe(17);
+  await page.waitForFunction(async () => !(await import('/script.js')).isGenerating());
+  await page.evaluate(() => (document.querySelector('#option_regenerate') as HTMLElement).click());
+  await page.waitForFunction(async () => (await import('/script.js')).isGenerating());
+  await page.waitForFunction(async () => !(await import('/script.js')).isGenerating());
+  await expect.poll(() => page.evaluate(() => (window as any).Mvu.getMvuData({ type: 'message', message_id: -1 })?.stat_data?.health)).toBe(17);
+  const beforeContinue = await page.evaluate(() => (window as any).SillyTavern.getContext().chat.at(-1).mes.length);
+  await page.evaluate(() => (document.querySelector('#option_continue') as HTMLElement).click());
+  await page.waitForFunction(async () => (await import('/script.js')).isGenerating());
+  await page.waitForFunction(async () => !(await import('/script.js')).isGenerating());
+  expect(await page.evaluate(() => (window as any).SillyTavern.getContext().chat.at(-1).mes.length)).toBeGreaterThan(beforeContinue);
+  await expect.poll(() => page.evaluate(() => (window as any).Mvu.getMvuData({ type: 'message', message_id: -1 })?.stat_data?.health)).toBe(17);
+  await page.evaluate(() => (window as any).__STC_RECEIVE__({ version: 1, session: 'plugins', id: 'generated-plugin-home', type: 'leave' }));
+  await expect.poll(() => page.evaluate(() => (window as any).messages.some((message: any) => message.id === 'generated-plugin-home'))).toBe(true);
+  const leaveResult = await page.evaluate(() => (window as any).messages.find((message: any) => message.id === 'generated-plugin-home'));
+  if (leaveResult.type === 'busy') {
+    // Match the native stop-and-return choice if an upstream follow-up is still active.
+    await page.evaluate(() => (window as any).__STC_RECEIVE__({ version: 1, session: 'plugins', id: 'generated-plugin-stop-home', type: 'stopAndLeave' }));
+    await expect.poll(() => page.evaluate(() => (window as any).messages.find((message: any) => message.id === 'generated-plugin-stop-home')), { timeout: 20000 }).toMatchObject({ type: 'openNativeHome' });
+  } else expect(leaveResult.type).toBe('openNativeHome');
 });

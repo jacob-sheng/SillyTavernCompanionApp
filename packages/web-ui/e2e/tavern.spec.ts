@@ -116,6 +116,10 @@ test('character edits and JSON exports use the original bound form', async ({ pa
     return result.json();
   }, avatar);
   expect(persisted.description).toBe(description);
+  const importedName = `导入 fixture ${Date.now()}`;
+  card.name = importedName; card.data.name = importedName;
+  await page.locator('#character_import_file').setInputFiles({ name: `${importedName}.json`, mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(card)) });
+  await expect.poll(() => page.evaluate(name => (window as any).SillyTavern.getContext().characters.find((character: any) => character.name === name)?.description, importedName)).toBe(description);
 });
 test('extension navigation opens upstream manager and installer', async ({ page }) => {
   await load(page);

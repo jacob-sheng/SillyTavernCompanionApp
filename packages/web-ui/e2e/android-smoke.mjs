@@ -25,8 +25,19 @@ function nodes() {
   return [...xml.matchAll(/<node\s+([^>]+)>/g)].map(match => Object.fromEntries([...match[1].matchAll(/([\w-]+)="([^"]*)"/g)].map(m => [m[1], m[2]])));
 }
 async function tapId(id) {
-  const node = await until(() => nodes().find(n => n['resource-id'] === id || n['resource-id']?.endsWith(`:id/${id}`)), id);
+  const node = await until(() => {
+    const current = nodes();
+    const warning = current.find(n => n['content-desc']?.includes('Open debugger to view warnings'));
+    if (warning) {
+      const [left, top, right, bottom] = warning.bounds.match(/\d+/g).map(Number);
+      // React Native's debug LogBox close icon occupies the right end of this banner.
+      adb('shell', 'input', 'tap', String(right - Math.min(8, (right - left) / 4)), String(Math.round((top + bottom) / 2)));
+      return null;
+    }
+    return current.find(n => n['resource-id'] === id || n['resource-id']?.endsWith(`:id/${id}`));
+  }, id);
   const [x1, y1, x2, y2] = node.bounds.match(/\d+/g).map(Number);
+  console.log('Tap', id, node.bounds);
   adb('shell', 'input', 'tap', String(Math.round((x1 + x2) / 2)), String(Math.round((y1 + y2) / 2)));
 }
 async function fill(id, text) {
