@@ -544,6 +544,7 @@
     "home": "首页",
     "menu": "工作区",
     "workspace": "工作区",
+    "sectionNavigation": "跳转到设置章节",
     "actions": "聊天操作",
     "models": "模型与连接",
     "presets": "预设与提示词",

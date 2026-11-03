@@ -33,6 +33,7 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - run: pnpm install --frozen-lockfile
       - run: pnpm -r typecheck && pnpm --filter mobile lint
+      - run: pnpm --filter mobile exec expo export --platform android --max-workers 2 --output-dir ../../.cache/android-export
       - run: pnpm --filter mobile prebuild --platform android
       - name: Build debug APK (no release signing secrets)
         working-directory: apps/mobile/android
@@ -67,7 +68,12 @@ jobs:
           }
           EOF
           docker run -d --name stc-caddy --network host -v "$PWD/.cache/Caddyfile:/etc/caddy/Caddyfile:ro" caddy:2.11.7
-          for i in $(seq 1 60); do curl -fsS http://127.0.0.1:8190/version && curl -fsS http://127.0.0.1:8081/status && break || sleep 2; done
+          ready=false
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:8190/version && curl -fsS http://127.0.0.1:8081/status; then ready=true; break; fi
+            sleep 2
+          done
+          if [ "$ready" != true ]; then cat .cache/metro.log; exit 1; fi
       - name: Enable KVM
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules

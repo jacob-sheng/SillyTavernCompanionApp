@@ -19,12 +19,13 @@ test('Tavern Helper and pinned MVU update per-message variables under the modern
   await page.evaluate(() => { (window as any).__STC_CONFIG__ = { session: 'plugins', origin: location.origin, locale: 'zh-CN', theme: 'dark', original: false }; });
   await page.evaluate(bundle);
   await expect.poll(() => page.evaluate(() => (window as any).messages), { timeout: 30000 }).toContainEqual(expect.objectContaining({ type: 'ready' }));
-  await page.evaluate(async mvu => {
+  await page.evaluate(async () => {
     const ctx = (window as any).SillyTavern.getContext();
     if (!ctx.characters.length) throw new Error('Run the base fixture tests first to create a test character.');
     (window as any).__STC_RECEIVE__({ version: 1, session: 'plugins', id: 'plugin-chat', type: 'navigate', target: { kind: 'character', avatar: ctx.characters[0].avatar, action: 'new' } });
-    (window as any).TavernHelper.replaceScriptTrees([{ type: 'script', id: 'stc-mvu-fixture', enabled: true, name: 'MVU fixture', content: mvu }], { type: 'global' });
-  }, mvu);
+  });
+  await expect.poll(() => page.evaluate(() => (window as any).messages.find((message: any) => message.id === 'plugin-chat'))).toMatchObject({ ok: true });
+  await page.evaluate(mvu => (window as any).TavernHelper.replaceScriptTrees([{ type: 'script', id: 'stc-mvu-fixture', enabled: true, name: 'MVU fixture', content: mvu }], { type: 'global' }), mvu);
   await page.waitForFunction(() => !!(window as any).Mvu?.parseMessage, { timeout: 60000 });
   const result = await page.evaluate(async () => {
     const Mvu = (window as any).Mvu;

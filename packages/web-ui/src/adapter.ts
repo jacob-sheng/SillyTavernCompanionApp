@@ -41,7 +41,8 @@ export class TavernAdapter {
     if (target.kind === 'panel') { await this.openPanel(target.panel); return; }
     if (target.kind === 'group') {
       const url = new URL('/scripts/group-chats.js', location.origin).href;
-      const groups = await import(/* @vite-ignore */ url) as { groups: { id: string; chats: string[]; chat_id: string }[]; openGroupById: (id: string) => Promise<boolean> };
+      const groups = await import(/* @vite-ignore */ url) as { groups: { id: string; chats: string[]; chat_id: string }[]; getGroups: () => Promise<void>; openGroupById: (id: string) => Promise<boolean> };
+      await groups.getGroups();
       const group = groups.groups.find(g => String(g.id) === target.groupId);
       const file = target.file?.replace(/\.jsonl$/i, '') ?? group?.chat_id;
       if (!group || !file || !group.chats.includes(file)) throw new Error('missing');
@@ -58,16 +59,21 @@ export class TavernAdapter {
     if (id < 0) throw new Error('missing');
     // Validate BEFORE switching: openCharacterChat creates a file if it does not exist.
     const file = target.file?.replace(/\.jsonl$/i, '');
-    if (file) {
+    const switching = Boolean(ctx.groupId) || Number(ctx.characterId) !== id;
+    let firstChatOnSelection = false;
+    if (file || (target.action === 'new' && switching)) {
       const response = await fetch('/api/characters/chats', { method: 'POST', headers: ctx.getRequestHeaders(), body: JSON.stringify({ avatar_url: target.avatar }) });
       if (!response.ok) throw new Error('network');
       const rows = Object.values(await response.json() as Record<string, { file_name?: string }>);
-      if (!rows.some(c => c.file_name?.replace(/\.jsonl$/i, '') === file)) throw new Error('missing');
+      if (file && !rows.some(c => c.file_name?.replace(/\.jsonl$/i, '') === file)) throw new Error('missing');
+      firstChatOnSelection = rows.length === 0;
     }
     await ctx.selectCharacterById(id, { switchMenu: target.action === 'edit' });
     ctx = this.context();
     if (ctx.groupId || ctx.characters[Number(ctx.characterId)]?.avatar !== target.avatar) throw new Error('busy');
-    if (target.action === 'new') await this.module.doNewChat();
+    // Selecting an unused card already creates its first chat through Tavern's
+    // normal greeting/plugin lifecycle. Calling doNewChat again initializes twice.
+    if (target.action === 'new' && !firstChatOnSelection) await this.module.doNewChat();
     else if (file && ctx.getCurrentChatId() !== file) await ctx.openCharacterChat(file);
     if (file && this.context().getCurrentChatId() !== file) throw new Error('missing');
     if (target.action === 'edit') await this.openPanel('characters');

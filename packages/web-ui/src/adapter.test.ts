@@ -23,6 +23,12 @@ describe('Tavern navigation', () => {
     expect(ctx.selectCharacterById).not.toHaveBeenCalled();
     expect(ctx.openCharacterChat).not.toHaveBeenCalled();
   });
+  it('does not initialize an unused card twice when selection already creates its first chat', async () => {
+    vi.mocked(fetch).mockResolvedValue({ ok: true, json: async () => [] } as Response);
+    await adapter.navigate({ kind: 'character', avatar: '角色.png', action: 'new' });
+    expect(ctx.selectCharacterById).toHaveBeenCalledOnce();
+    expect(module.doNewChat).not.toHaveBeenCalled();
+  });
   it('preserves special characters and passes the browser CSRF session', async () => {
     ctx.openCharacterChat = vi.fn(async file => { ctx.getCurrentChatId = () => file; });
     await adapter.navigate({ kind: 'character', avatar: '角色.png', action: 'continue', file: '故事 #1.jsonl' });

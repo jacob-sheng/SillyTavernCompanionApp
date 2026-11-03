@@ -1,5 +1,5 @@
 /** @type {import('tailwindcss').Config} */
-const { radii } = require('./src/theme/'var(--stc-js)'');
+const { radii } = require('./src/theme/palette.js');
 
 module.exports = {
   content: ['./app/**/*.{ts,tsx}', './src/**/*.{ts,tsx}'],

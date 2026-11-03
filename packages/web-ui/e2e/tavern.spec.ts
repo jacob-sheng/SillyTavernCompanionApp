@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 const generated = readFileSync(new URL('../../../apps/mobile/src/generated/tavernBundle.ts', import.meta.url), 'utf8');
 const bundle: string = JSON.parse(generated.slice(generated.indexOf(' = ') + 3).trim().replace(/;$/, ''));
 
-async function load(page: Page, original = false) {
+async function load(page: Page, original = false, theme = 'dark') {
   await page.addInitScript(() => {
     localStorage.setItem('language', 'zh-cn');
     (window as any).messages = [];
@@ -14,12 +14,21 @@ async function load(page: Page, original = false) {
   const onboarding = page.locator('dialog[open] .popup-button-ok');
   if (await onboarding.isVisible()) await onboarding.click();
   await page.waitForFunction(async () => { const url = '/script.js'; return (await import(/* @vite-ignore */ url)).settingsReady; });
-  await page.evaluate(({ original }) => {
-    (window as any).__STC_CONFIG__ = { session: 'test', origin: location.origin, locale: 'zh-CN', theme: 'dark', original };
-  }, { original });
+  await page.evaluate(({ original, theme }) => {
+    (window as any).__STC_CONFIG__ = { session: 'test', origin: location.origin, locale: 'zh-CN', theme, original };
+  }, { original, theme });
   await page.evaluate(bundle);
   await expect.poll(() => page.evaluate(() => (window as any).messages)).toEqual(expect.arrayContaining([expect.objectContaining({ type: 'ready' })]));
 }
+test('light editors have readable helper text and acknowledge their first panel title', async ({ page }) => {
+  await load(page, false, 'light');
+  await navigate(page, 'first-panel', { kind: 'panel', panel: 'models' });
+  await expect(page.locator('#stc-root .stc-heading strong')).not.toHaveText('Tavern');
+  const helper = page.locator('#rm_api_block small').first();
+  await expect(helper).toHaveCSS('color', 'rgb(99, 99, 116)');
+  await expect(helper).toHaveCSS('opacity', '1');
+  await page.screenshot({ path: '../../.cache/web-ui-light-models.png' });
+});
 async function navigate(page: Page, id: string, target: object) {
   await page.evaluate(({ id, target }) => (window as any).__STC_RECEIVE__({ version: 1, session: 'test', id, type: 'navigate', target }), { id, target });
   await expect.poll(() => page.evaluate(id => (window as any).messages.find((m: any) => m.type === 'navigationResult' && m.id === id), id)).toMatchObject({ ok: true });
@@ -46,10 +55,16 @@ test('new chat is created once and navigation preserves an existing iframe', asy
     const url = '/script.js'; const script = await import(/* @vite-ignore */ url); await script.getCharacters();
     return avatar;
   });
+  await page.evaluate(() => {
+    const ctx = (window as any).SillyTavern.getContext();
+    (window as any).createdChats = 0;
+    ctx.eventSource.on(ctx.eventTypes.CHAT_CREATED, () => { (window as any).createdChats++; });
+  });
   await navigate(page, 'new-once', { kind: 'character', avatar, action: 'new' });
   const first = await page.evaluate(() => (window as any).SillyTavern.getContext().getCurrentChatId());
   await navigate(page, 'new-once', { kind: 'character', avatar, action: 'new' });
   expect(await page.evaluate(() => (window as any).SillyTavern.getContext().getCurrentChatId())).toBe(first);
+  expect(await page.evaluate(() => (window as any).createdChats)).toBe(1);
   await page.evaluate(() => {
     const frame = document.createElement('iframe'); frame.srcdoc = '<button>State</button>'; frame.id = 'test-frame';
     document.querySelector('#chat .mes_text')!.append(frame); (window as any).retainedFrame = frame;
@@ -60,10 +75,39 @@ test('new chat is created once and navigation preserves an existing iframe', asy
   await expect(page.locator('#WorldInfo')).toBeHidden();
   await page.screenshot({ path: '../../.cache/web-ui-chat.png' });
 });
+test('settings section navigation keeps bound controls and existing values', async ({ page }) => {
+  await load(page);
+  await navigate(page, 'settings-sections', { kind: 'panel', panel: 'settings' });
+  await page.evaluate(() => { (window as any).settingsField = document.querySelector('#customCSS'); });
+  const jump = page.getByLabel('跳转到设置章节');
+  await expect(jump.locator('option')).not.toHaveCount(1);
+  const last = await jump.locator('option').last().getAttribute('value');
+  await jump.selectOption(last!);
+  expect(await page.evaluate(() => (window as any).settingsField === document.querySelector('#customCSS'))).toBe(true);
+  expect(await page.evaluate(() => document.activeElement?.tagName)).toBe('H4');
+  await page.screenshot({ path: '../../.cache/web-ui-settings-navigation.png' });
+});
 test('original mode keeps the original page and still offers the bridge', async ({ page }) => {
   await load(page, true);
   await expect(page.locator('#stc-root')).toHaveCount(0);
   await navigate(page, 'extensions', { kind: 'panel', panel: 'extensions' });
+});
+test('retained group navigation discovers new groups and rejects deleted groups', async ({ page }) => {
+  await load(page);
+  const groupId = await page.evaluate(async () => {
+    const ctx = (window as any).SillyTavern.getContext();
+    const response = await fetch('/api/groups/create', { method: 'POST', headers: ctx.getRequestHeaders(), body: JSON.stringify({ name: '群聊 # fixture', members: [ctx.characters[0].avatar] }) });
+    if (!response.ok) throw new Error('create group failed');
+    return (await response.json()).id;
+  });
+  await navigate(page, 'new-group', { kind: 'group', groupId });
+  await page.evaluate(async groupId => {
+    const ctx = (window as any).SillyTavern.getContext();
+    const response = await fetch('/api/groups/delete', { method: 'POST', headers: ctx.getRequestHeaders(), body: JSON.stringify({ id: groupId }) });
+    if (!response.ok) throw new Error('delete group failed');
+    (window as any).__STC_RECEIVE__({ version: 1, session: 'test', id: 'deleted-group', type: 'navigate', target: { kind: 'group', groupId } });
+  }, groupId);
+  await expect.poll(() => page.evaluate(() => (window as any).messages.find((m: any) => m.id === 'deleted-group'))).toMatchObject({ ok: false, code: 'missing' });
 });
 
 test('real streaming generation saves before returning home', async ({ page }) => {

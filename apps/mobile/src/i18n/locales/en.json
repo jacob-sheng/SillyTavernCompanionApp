@@ -544,6 +544,7 @@
     "home": "Home",
     "menu": "Workspace",
     "workspace": "Workspace",
+    "sectionNavigation": "Jump to section",
     "actions": "Chat actions",
     "models": "Models & connections",
     "presets": "Presets & prompts",

@@ -8,6 +8,19 @@ html.stc-modern[data-stc-theme="light"] {
   --stc-text: #20202a; --stc-muted: #636374; --stc-accent: #6450c7; color-scheme: light;
 }
 html.stc-modern body { background: var(--stc-bg) !important; color: var(--stc-text); font-family: Inter, system-ui, sans-serif; }
+/* Scope upstream palette aliases to core editors. Do not recolor card HTML or
+   third-party extension settings, and never write to the user's saved theme. */
+.stc-modern #top-settings-holder .drawer-content:not(#rm_extensions_block) {
+  --SmartThemeBodyColor: var(--stc-text);
+  --SmartThemeEmColor: var(--stc-muted);
+  --SmartThemeBlurTintColor: var(--stc-surface);
+  --SmartThemeBorderColor: var(--stc-border);
+  --SmartThemeShadowColor: transparent;
+  text-shadow: none;
+}
+.stc-modern #top-settings-holder .drawer-content:not(#rm_extensions_block) :is(.text_muted, small) {
+  color: var(--stc-muted); opacity: 1;
+}
 .stc-modern #bg1, .stc-modern #bg_custom { opacity: .12; }
 .stc-modern #top-bar { display: none !important; }
 #stc-root { font: 15px/1.5 Inter, system-ui, sans-serif; color: var(--stc-text); }
@@ -51,6 +64,11 @@ html.stc-modern body { background: var(--stc-bg) !important; color: var(--stc-te
 .stc-modern #top-settings-holder > .drawer:not(#extensions-settings-button) .standoutHeader { background: transparent; padding: 12px 0; }
 .stc-modern #top-settings-holder hr { border-color: var(--stc-border); margin: 20px 0; }
 .stc-modern #top-settings-holder .drag-grabber { display: none; }
+.stc-modern #user-settings-block .stc-section-navigation { position: sticky; top: -24px; z-index: 1; background: var(--stc-surface); padding: 8px 0 16px; border-bottom: 1px solid var(--stc-border); margin-bottom: 20px; }
+.stc-modern .stc-section-navigation label { display: flex; align-items: center; gap: 12px; font-size: 14px; color: var(--stc-muted); }
+.stc-modern .stc-section-navigation select { flex: 1; min-width: 0; }
+.stc-modern #user-settings-block-content h4 { background: transparent !important; scroll-margin-top: 90px; }
+.stc-modern #user-settings-block-content [name$="Toggles"] { border-top: 1px solid var(--stc-border); padding: 12px 0 20px; }
 .stc-modern dialog { background: var(--stc-surface); color: var(--stc-text); border: 1px solid var(--stc-border); border-radius: 20px; max-width: calc(100vw - 24px); }
 .stc-modern #options { background: var(--stc-surface); border: 1px solid var(--stc-border); border-radius: 16px; padding: 10px; }
 .stc-modern #options a { padding: 12px; min-height: 44px; }
