@@ -6,6 +6,12 @@ Android `versionCode` increases by 1 per release (0.9.0 = 2).
 
 ## [Unreleased]
 
+## [0.18.1] - 2026-11-03 (Beta)
+
+### Fixed
+- Accept SDK-range signer labels from newer Android build-tools while strictly verifying every signer certificate.
+- Remove accidentally tracked agent worktree gitlinks that break checkout cleanup.
+
 ## [0.18.0] - 2026-11-03 (Beta)
 
 ### Added

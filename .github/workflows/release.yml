@@ -87,6 +87,13 @@ jobs:
           chmod +x gradlew
           ./gradlew :app:assembleRelease -x :app:lintVitalRelease -x :app:lintVitalAnalyzeRelease
 
+      - name: Preserve candidate APK for build diagnostics
+        uses: actions/upload-artifact@v4
+        with:
+          name: candidate-${{ env.TAG }}
+          path: apps/mobile/android/app/build/outputs/apk/release/app-release.apk
+          retention-days: 7
+
       # The signing plugin falls back to the debug keystore by design (local dev convenience),
       # so a missing/broken secret must hard-fail HERE - a debug-signed "release" never ships.
       - name: Guard - APK must be signed with this fork's release key
@@ -100,11 +107,8 @@ jobs:
           APK=apps/mobile/android/app/build/outputs/apk/release/app-release.apk
           BT="$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)"
           CERTS=$("$BT/apksigner" verify --print-certs "$APK")
-          ACTUAL=$(printf '%s\n' "$CERTS" | sed -n 's/^Signer #1 certificate SHA-256 digest: //p')
-          if [ "${ACTUAL,,}" != "${EXPECTED_CERT,,}" ]; then
-            echo '::error::APK certificate does not match this fork (debug fallback or wrong key).'
-            exit 1
-          fi
+          printf '%s\n' "$CERTS"
+          printf '%s\n' "$CERTS" | node scripts/release/verify-signature.mjs
 
       - name: Upload R8 mapping (deobfuscation)
         uses: actions/upload-artifact@v4
