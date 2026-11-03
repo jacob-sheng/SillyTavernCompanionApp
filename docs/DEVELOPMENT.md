@@ -163,6 +163,11 @@ Required repository secrets: `ANDROID_KEYSTORE_BASE64`, `STC_UPLOAD_STORE_PASSWO
 the fork's key; missing secrets or a debug-signed APK fail the release instead of publishing.
 Keep an offline backup of the keystore and passwords; keep using the same key for future updates.
 
+The complete keystore is stored in this repository's encrypted Actions Secrets, not just a path
+to a developer's computer. GitHub runners reconstruct it for each build, so releases are independent
+of any local machine. A Git deploy key is not needed for APK signing. Local signing files are only
+an additional backup and must never be committed to the public repository.
+
 The fork uses application ID `io.github.jacobsheng.stcompanion`, display name
 `SillyTavern Companion CN`, and the releases of `jacob-sheng/SillyTavernCompanionApp` for updates.
 It installs independently of the upstream app, whose signing key cannot be reused by this fork.
