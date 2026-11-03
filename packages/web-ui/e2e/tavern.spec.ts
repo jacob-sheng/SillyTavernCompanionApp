@@ -112,6 +112,69 @@ test('character edits and JSON exports use the original bound form', async ({ pa
   }, avatar);
   expect(persisted.description).toBe(description);
 });
+test('extension navigation opens upstream manager and installer', async ({ page }) => {
+  await load(page);
+  await navigate(page, 'extensions-center', { kind: 'panel', panel: 'extensions' });
+  await page.getByRole('button', { name: '管理已安装的扩展', exact: true }).click();
+  await expect(page.locator('dialog[open] .extensions_info')).toBeVisible();
+  await page.evaluate(() => { (window as any).regexControl = document.querySelector('.extension_block[data-name="regex"]'); });
+  await page.getByRole('searchbox', { name: '搜索扩展' }).fill('Regex');
+  await expect(page.locator('.extensions_info .extension_block:visible')).toHaveCount(1);
+  expect(await page.evaluate(() => document.querySelector('.extension_block[data-name="regex"]') === (window as any).regexControl)).toBe(true);
+  await page.getByRole('searchbox', { name: '搜索扩展' }).fill('');
+  await page.screenshot({ path: '../../.cache/web-ui-extensions-manager.png' });
+  await page.locator('dialog[open] .popup-button-ok').click();
+  await page.getByRole('button', { name: '通过网址安装', exact: true }).click();
+  await expect(page.locator('dialog[open] #extension_branch_name')).toBeVisible();
+  await page.locator('dialog[open] .popup-button-cancel').click();
+});
+test('world book creation, entry editing and export retain upstream persistence', async ({ page }) => {
+  await load(page);
+  await navigate(page, 'world-editor', { kind: 'panel', panel: 'world' });
+  const name = `世界书 fixture ${Date.now()}`;
+  await page.locator('#world_create_button').click();
+  await page.locator('dialog[open] .popup-input').fill(name);
+  await page.locator('dialog[open] .popup-button-ok').click();
+  await expect(page.locator('#world_editor_select option:checked')).toHaveText(name);
+  await page.locator('#world_popup_new').click();
+  await page.locator('#world_popup_entries_list .inline-drawer-toggle').first().click();
+  const content = '城市位于海边。Fixture world entry.';
+  await page.locator('#world_popup_entries_list textarea[name="content"]').fill(content);
+  await expect.poll(() => page.evaluate(async name => {
+    const ctx = (window as any).SillyTavern.getContext();
+    const result = await fetch('/api/worldinfo/get', { method: 'POST', headers: ctx.getRequestHeaders(), body: JSON.stringify({ name }) });
+    if (!result.ok) return null;
+    const data = await result.json();
+    return Object.values(data.entries).map((entry: any) => entry.content);
+  }, name)).toContain(content);
+  await page.locator('#world_popup_export').click();
+  await expect.poll(() => page.evaluate(() => (window as any).messages.find((message: any) => message.type === 'exportFile'))).toMatchObject({ name: `${name}.json` });
+  const exported = await page.evaluate(() => (window as any).messages.find((message: any) => message.type === 'exportFile'));
+  expect(Object.values(JSON.parse(Buffer.from(exported.base64, 'base64').toString('utf8')).entries).map((entry: any) => entry.content)).toContain(content);
+});
+test('sampling preset changes survive save-as and JSON export', async ({ page }) => {
+  await load(page);
+  await page.evaluate(async () => { const path = '/script.js'; (await import(/* @vite-ignore */ path)).changeMainAPI('openai'); });
+  await navigate(page, 'preset-editor', { kind: 'panel', panel: 'presets' });
+  await page.locator('#temp_counter_openai').fill('0.73');
+  await page.locator('#temp_counter_openai').press('Tab');
+  const name = `采样 fixture ${Date.now()}`;
+  await page.locator('#new_oai_preset').click();
+  await page.locator('dialog[open] .popup-input').fill(name);
+  await page.locator('dialog[open] .popup-button-ok').click();
+  await expect(page.locator('#settings_preset_openai option:checked')).toHaveText(name);
+  await page.locator('#export_oai_preset').click();
+  // Upstream asks whether to remove endpoint data, then which fields to export.
+  for (let attempt = 0; attempt < 20; attempt++) {
+    if (await page.evaluate(() => (window as any).messages.some((message: any) => message.type === 'exportFile'))) break;
+    const confirm = page.locator('dialog[open] .popup-button-ok');
+    if (await confirm.isVisible()) await confirm.click();
+    await page.waitForTimeout(200);
+  }
+  await expect.poll(() => page.evaluate(() => (window as any).messages.find((message: any) => message.type === 'exportFile'))).toMatchObject({ name: `${name}.json` });
+  const exported = await page.evaluate(() => (window as any).messages.find((message: any) => message.type === 'exportFile'));
+  expect(JSON.parse(Buffer.from(exported.base64, 'base64').toString('utf8')).temperature).toBe(0.73);
+});
 test('retained group navigation discovers new groups and rejects deleted groups', async ({ page }) => {
   await load(page);
   const groupId = await page.evaluate(async () => {

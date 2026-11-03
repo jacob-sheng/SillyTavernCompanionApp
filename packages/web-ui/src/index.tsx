@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { flushSync } from 'react-dom';
 import { SettingsNavigation } from './SettingsNavigation';
+import { ExtensionsNavigation } from './ExtensionsNavigation';
 import css from './style.css';
 import { themeCss } from './theme';
 import { TavernAdapter, CommandQueue, click, type TavernContext, type TavernModule } from './adapter';
@@ -142,7 +143,7 @@ async function boot(config: BootConfig) {
         return <><header className="stc-header" onClick={event => event.stopPropagation()}><button className="stc-icon" aria-label={page ? strings.closePanel : strings.home} onClick={() => { if (page) { void adapter.closePanels().then(() => setPage(null)); } else home(); }}><svg viewBox="0 0 24 24"><path d="m14 6-6 6 6 6" /></svg></button><div className="stc-heading"><strong>{page ? strings[page] : name}</strong><small>{strings.subtitle}</small></div><button className="stc-icon" aria-label={strings.menu} onClick={() => setMenu(!menu)}><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16" /></svg></button></header>{menu && <div className="stc-scrim" onClick={() => setMenu(false)}><nav className="stc-menu" onClick={e => e.stopPropagation()}><button onClick={home}>{strings.home}</button><p>{strings.workspace}</p>{items.map(item => <button key={item} onClick={() => open(item)}>{strings[item]}</button>)}<p>{strings.actions}</p>{(['regenerate', 'continue'] as const).map(action => <button key={action} onClick={() => { try { click(`#option_${action}`); setMenu(false); } catch { setError(strings.unsupported); } }}>{strings[action]}</button>)}</nav></div>}{error && <div className="stc-error">{error}<button onClick={() => setError('')}>{strings.closePanel}</button></div>}</>;
       }
       // Install navigation listeners before ready permits the native host to send commands.
-      flushSync(() => createRoot(host).render(<><Shell /><SettingsNavigation label={strings.sectionNavigation} /></>));
+      flushSync(() => createRoot(host).render(<><Shell /><SettingsNavigation label={strings.sectionNavigation} /><ExtensionsNavigation manage={strings.manageExtensions} install={strings.installExtension} unavailable={strings.unsupported} search={strings.searchExtensions} /></>));
     }
     send({ type: 'ready' });
   } catch (error) {

@@ -40,3 +40,4 @@ apps/mobile/modules/**/android/build/
 # Local build/research artifacts
 .cache/
 apps/mobile/src/generated/
+apps/mobile/expo-env.d.ts
