@@ -202,6 +202,11 @@ The repo is a pnpm monorepo: `packages/core` holds the prompt engine and the Sil
 plain TypeScript, `apps/mobile` is the Expo app. Setup, architecture, tests and the release build
 are in [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
 
+To publish the next prerelease, add entries under `[Unreleased]` in `CHANGELOG.md`, run
+`pnpm release:bump --bump patch` (or `--bump minor`), then commit and push to `main`.
+GitHub Actions validates the change, tags the new version and publishes the signed APK using
+the signing key stored in repository Secrets. No local Android build or signing setup is required.
+
 ## License and attribution
 
 GNU AGPL-3.0, see [LICENSE](LICENSE).
