@@ -8,9 +8,9 @@ import { execFileSync } from 'node:child_process';
 test('Windows CRLF changelog bumps every version and Android code together', () => {
   const root = mkdtempSync(join(tmpdir(), 'st-release-'));
   try {
-    for (const folder of ['scripts/release', 'apps/mobile', 'packages/core']) mkdirSync(join(root, folder), { recursive: true });
+    for (const folder of ['scripts/release', 'apps/mobile', 'packages/core', 'packages/web-ui']) mkdirSync(join(root, folder), { recursive: true });
     copyFileSync(new URL('./prepare.mjs', import.meta.url), join(root, 'scripts/release/prepare.mjs'));
-    for (const file of ['package.json', 'apps/mobile/package.json', 'packages/core/package.json']) {
+    for (const file of ['package.json', 'apps/mobile/package.json', 'packages/core/package.json', 'packages/web-ui/package.json']) {
       writeFileSync(join(root, file), '{"version": "0.17.1"}\r\n');
     }
     writeFileSync(join(root, 'apps/mobile/app.config.ts'), "export default {\r\n  version: '0.17.1',\r\n  android: { versionCode: 19, },\r\n};\r\n");
@@ -19,7 +19,7 @@ test('Windows CRLF changelog bumps every version and Android code together', () 
     run('--dry-run');
     assert.equal(JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')).version, '0.17.1');
     run('--date', '2026-11-03');
-    for (const file of ['package.json', 'apps/mobile/package.json', 'packages/core/package.json']) {
+    for (const file of ['package.json', 'apps/mobile/package.json', 'packages/core/package.json', 'packages/web-ui/package.json']) {
       assert.equal(JSON.parse(readFileSync(join(root, file), 'utf8')).version, '0.18.0');
     }
     assert.match(readFileSync(join(root, 'apps/mobile/app.config.ts'), 'utf8'), /versionCode: 20/);

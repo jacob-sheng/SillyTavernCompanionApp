@@ -3,7 +3,7 @@ import { Tabs } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { AppText } from '@/components/ui';
 import { Icon, type IconName } from '@/theme/icons';
-import { colors } from '@/theme/tokens';
+import { useThemeColors } from '@/theme/useThemeColors';
 import { useBottomInset } from '@/theme/insets';
 import { haptics } from '@/theme/haptics';
 
@@ -32,6 +32,7 @@ type TabBarProps = {
  * reliable bottom inset.
  */
 function TabBar({ state, descriptors, emitter, navigateToTab }: TabBarProps) {
+  const colors = useThemeColors();
   const bottom = useBottomInset(12);
   return (
     <View
@@ -74,6 +75,7 @@ function TabBar({ state, descriptors, emitter, navigateToTab }: TabBarProps) {
 }
 
 export default function TabsLayout() {
+  const colors = useThemeColors();
   const { t } = useTranslation();
   return (
     <Tabs

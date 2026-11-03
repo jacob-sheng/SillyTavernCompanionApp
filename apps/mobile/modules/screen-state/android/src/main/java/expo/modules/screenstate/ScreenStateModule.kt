@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.view.WindowManager
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
 
@@ -21,6 +22,14 @@ class ScreenStateModule : Module() {
     Name("ScreenState")
 
     Events("screenOff")
+
+    Function("setSecureWindow") { enabled: Boolean ->
+      appContext.currentActivity?.runOnUiThread {
+        val window = appContext.currentActivity?.window
+        if (enabled) window?.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+        else window?.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+      }
+    }
 
     OnCreate {
       val filter = IntentFilter(Intent.ACTION_SCREEN_OFF)

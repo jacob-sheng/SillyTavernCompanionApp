@@ -6,6 +6,15 @@ Android `versionCode` increases by 1 per release (0.9.0 = 2).
 
 ## [Unreleased]
 
+### Changed
+- In development: retain native recent chats and character browsing while moving chat execution and editing to a persistent SillyTavern WebView, with a bundled modern navigation shell and mobile editor layouts.
+- Add a typed, session-scoped native/web bridge, upstream chat creation and save/return handshakes, guarded Android Basic Auth, native export confirmation, appearance preferences and original-page fallback.
+- Remove the previous native chat/generation routes and settings synchronization; preserve saved servers, credentials and preferences. Old native draft files are not uploaded automatically.
+
+### Development
+- Add a standalone web UI package, pinned real-SillyTavern browser integration, optional Tavern Helper/MVU smoke tests and Linux handoff documentation.
+- This migration is not ready for release. Android authentication isolation, native navigation/basic chat and the remaining page/plugin acceptance checks are still required; see `docs/HANDOFF-HYBRID.md`.
+
 ## [0.18.2] - 2026-11-03 (Beta)
 
 ### Fixed

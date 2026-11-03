@@ -1,0 +1,94 @@
+diff --git a/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewClient.java b/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewClient.java
+index 209b85525f0ceadae168b7575de00eafe4dba1d0..3ddc457f14aee55b277fc175cdd9260c35d02dd7 100644
+--- a/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewClient.java
++++ b/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewClient.java
+@@ -41,6 +41,36 @@ public class RNCWebViewClient extends WebViewClient {
+     protected boolean mLastLoadFailed = false;
+     protected RNCWebView.ProgressChangedFilter progressChangedFilter = null;
+     protected @Nullable RNCBasicAuthCredential basicAuthCredential = null;
++    private volatile String trustedSource = null;
++    private boolean authConsumed = false;
++
++    public void setTrustedSource(String source) {
++        if (source != null && source.equals(trustedSource)) return;
++        trustedSource = source;
++        authConsumed = false;
++    }
++
++    private boolean sameOrigin(String url) {
++        try {
++            java.net.URI source = java.net.URI.create(trustedSource);
++            java.net.URI target = java.net.URI.create(url);
++            int a = source.getPort() == -1 ? ("https".equalsIgnoreCase(source.getScheme()) ? 443 : 80) : source.getPort();
++            int b = target.getPort() == -1 ? ("https".equalsIgnoreCase(target.getScheme()) ? 443 : 80) : target.getPort();
++            return source.getScheme().equalsIgnoreCase(target.getScheme()) && source.getHost().equalsIgnoreCase(target.getHost()) && a == b;
++        } catch (Exception e) { return false; }
++    }
++
++    @Override
++    public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
++        try {
++            java.net.URI source = java.net.URI.create(trustedSource);
++            String target = request.getUrl().toString();
++            if (basicAuthCredential != null && source.getHost().equalsIgnoreCase(request.getUrl().getHost()) && !sameOrigin(target)) {
++                return new WebResourceResponse("text/plain", "UTF-8", 403, "Forbidden", java.util.Collections.emptyMap(), new java.io.ByteArrayInputStream(new byte[0]));
++            }
++        } catch (Exception ignored) { }
++        return super.shouldInterceptRequest(view, request);
++    }
+ 
+     public void setBasicAuthCredential(@Nullable RNCBasicAuthCredential credential) {
+         basicAuthCredential = credential;
+@@ -85,6 +115,14 @@ public class RNCWebViewClient extends WebViewClient {
+ 
+     @Override
+     public boolean shouldOverrideUrlLoading(WebView view, String url) {
++        // Never let an asynchronous JS navigation timeout authorize another main origin.
++        if (trustedSource != null && !sameOrigin(url)) {
++            WritableMap event = com.facebook.react.bridge.Arguments.createMap();
++            event.putString("targetUrl", url);
++            ((RNCWebView) view).dispatchEvent(view,
++                new com.reactnativecommunity.webview.events.TopOpenWindowEvent(RNCWebViewWrapper.getReactTagFromWebView(view), event));
++            return true;
++        }
+         final RNCWebView rncWebView = (RNCWebView) view;
+         final boolean isJsDebugging = rncWebView.getReactApplicationContext().getJavaScriptContextHolder().get() == 0;
+ 
+@@ -140,11 +178,20 @@ public class RNCWebViewClient extends WebViewClient {
+ 
+     @Override
+     public void onReceivedHttpAuthRequest(WebView view, HttpAuthHandler handler, String host, String realm) {
+-        if (basicAuthCredential != null) {
+-            handler.proceed(basicAuthCredential.username, basicAuthCredential.password);
+-            return;
+-        }
+-        super.onReceivedHttpAuthRequest(view, handler, host, realm);
++        // Caddy must protect the root document (verified before loading by the host).
++        // Hand credentials to Chromium once, for the initial main-document challenge.
++        // Chromium then caches auth per protection space. Never answer subresource,
++        // redirect or retry challenges with the saved server credentials.
++        try {
++            String expectedHost = java.net.URI.create(trustedSource).getHost();
++            if (basicAuthCredential != null && !authConsumed && expectedHost.equalsIgnoreCase(host)
++                    && sameOrigin(view.getUrl())) {
++                authConsumed = true;
++                handler.proceed(basicAuthCredential.username, basicAuthCredential.password);
++                return;
++            }
++        } catch (Exception ignored) { }
++        handler.cancel();
+     }
+ 
+     @Override
+diff --git a/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt b/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt
+index f83033b3597a425da159555233bacce250ccfce0..9e807d004b245287a0c071253650e95abcd6847a 100644
+--- a/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt
++++ b/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt
+@@ -399,6 +399,7 @@ class RNCWebViewManagerImpl(private val newArch: Boolean = false) {
+             }
+             if (source.hasKey("uri")) {
+                 val url = source.getString("uri")
++                view.getRNCWebViewClient()?.setTrustedSource(url)
+                 val previousUrl = view.url
+                 if (previousUrl != null && previousUrl == url) {
+                     return

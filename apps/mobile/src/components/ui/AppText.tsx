@@ -1,5 +1,6 @@
+import { useThemeColors } from '@/theme/useThemeColors';
 import { Text, type TextProps } from 'react-native';
-import { colors, typography, type TextVariant } from '@/theme/tokens';
+import { typography, type TextVariant } from '@/theme/tokens';
 
 export type TextColor =
   | 'text'
@@ -11,16 +12,7 @@ export type TextColor =
   | 'warning'
   | 'onAccent';
 
-const COLOR: Record<TextColor, string> = {
-  text: colors.text,
-  muted: colors.textMuted,
-  subtle: colors.textSubtle,
-  accent: colors.accent,
-  danger: colors.danger,
-  success: colors.success,
-  warning: colors.warning,
-  onAccent: colors.onAccent,
-};
+
 
 export interface AppTextProps extends TextProps {
   variant?: TextVariant;
@@ -33,6 +25,17 @@ export interface AppTextProps extends TextProps {
  * style rather than relying on font-weight utilities).
  */
 export function AppText({ variant = 'body', color = 'text', style, ...rest }: AppTextProps) {
+  const colors = useThemeColors();
+  const COLOR: Record<TextColor, string> = {
+  text: colors.text,
+  muted: colors.textMuted,
+  subtle: colors.textSubtle,
+  accent: colors.accent,
+  danger: colors.danger,
+  success: colors.success,
+  warning: colors.warning,
+  onAccent: colors.onAccent,
+};
   const t = typography[variant];
   return (
     <Text

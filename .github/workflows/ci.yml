@@ -24,3 +24,34 @@ jobs:
       - run: pnpm --filter mobile lint
       - run: node --test scripts/release/*.test.mjs
       - run: node scripts/release/check.mjs
+
+  web-integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @st/web-ui build
+      - run: pnpm --filter @st/web-ui exec playwright install --with-deps chromium
+      - name: Prepare pinned Tavern fixture
+        run: |
+          git clone https://github.com/SillyTavern/SillyTavern.git .cache/SillyTavern
+          git -C .cache/SillyTavern checkout 7e8663cd9c184a550b37238218bdd32c6efc68e9
+          npm ci --omit=dev --prefix .cache/SillyTavern
+      - name: Browser integration
+        run: |
+          cd .cache/SillyTavern
+          node server.js --port 8190 --browserLaunchEnabled false > ../tavern.log 2>&1 &
+          cd ../..
+          for i in $(seq 1 60); do curl -fsS http://127.0.0.1:8190/version && break || sleep 2; done
+          pnpm --filter @st/web-ui exec playwright test
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: web-integration-diagnostics
+          path: .cache/playwright-results

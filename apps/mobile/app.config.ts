@@ -27,8 +27,8 @@ const config: ExpoConfig = {
   slug: 'sillytavern-companion',
   scheme: 'stcompanion',
   version: '0.18.2',
-  orientation: 'portrait',
-  userInterfaceStyle: 'dark',
+  orientation: 'default',
+  userInterfaceStyle: 'automatic',
   // New Architecture is the default (and only) arch on SDK 56 / RN 0.85, so an explicit
   // `newArchEnabled: true` is redundant - and it isn't in this Expo version's config types.
   assetBundlePatterns: ['**/*'],
@@ -77,6 +77,7 @@ const config: ExpoConfig = {
     './plugins/withReleaseSigning',
     // Extra gradle.properties (art-profile rewrite breaks under R8 with RN's baseline profile).
     './plugins/withGradleProps',
+    './plugins/withShortCmakePaths',
     [
       'expo-image-picker',
       {

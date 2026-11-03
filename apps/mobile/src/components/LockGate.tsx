@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState, Keyboard, Modal, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import * as LocalAuthentication from 'expo-local-authentication';
-import { addScreenOffListener } from '../../modules/screen-state';
+import { addScreenOffListener, setSecureWindow } from '../../modules/screen-state';
 import { usePrefs } from '@/stores/prefsStore';
 import { AppText, Button } from '@/components/ui';
 import { Icon } from '@/theme/icons';
@@ -29,6 +29,7 @@ export function LockGate() {
   // without this guard a slow PIN entry would re-arm the relock timer mid-authentication.
   const authBusy = useRef(false);
   const backgroundedAt = useRef<number | null>(null);
+  useEffect(() => { setSecureWindow(appLock); return () => setSecureWindow(false); }, [appLock]);
 
   useEffect(() => {
     if (hydrated && locked === null) setLocked(appLock);

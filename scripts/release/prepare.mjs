@@ -11,7 +11,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const PACKAGES = ['package.json', 'packages/core/package.json', 'apps/mobile/package.json'];
+const PACKAGES = ['package.json', 'packages/core/package.json', 'packages/web-ui/package.json', 'apps/mobile/package.json'];
 const APP_CONFIG = 'apps/mobile/app.config.ts';
 const CHANGELOG = 'CHANGELOG.md';
 const MINOR_SECTIONS = /^### (Added|Changed|Removed|Deprecated)\b/m;

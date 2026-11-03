@@ -15,6 +15,8 @@ const KEY_APPLOCK_MINUTES = 'prefs.appLockMinutes';
 export type ChatListMode = 'latest' | 'all';
 
 interface PrefsState {
+  appearance: 'system' | 'light' | 'dark';
+  setAppearance: (value: 'system' | 'light' | 'dark') => void;
   /** ST-style smooth streaming (character-by-character reveal). Default ON on mobile. */
   smoothStreaming: boolean;
   /** Chats tab: latest chat per character (default) or every chat file. */
@@ -36,6 +38,8 @@ interface PrefsState {
 }
 
 export const usePrefs = create<PrefsState>((set) => ({
+  appearance: 'system',
+  setAppearance: appearance => { set({ appearance }); void secrets.set('prefs.appearance', appearance).catch(() => {}); },
   smoothStreaming: true,
   chatList: 'latest',
   appLock: false,
@@ -44,6 +48,8 @@ export const usePrefs = create<PrefsState>((set) => ({
   hydrated: false,
   hydrate: async () => {
     try {
+      const appearance = await secrets.get('prefs.appearance');
+      if (appearance === 'system' || appearance === 'light' || appearance === 'dark') set({ appearance });
       const [smooth, chatList, appLock, lockTimer, lockMinutes] = await Promise.all([
         secrets.get(KEY_SMOOTH),
         secrets.get(KEY_CHATLIST),

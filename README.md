@@ -9,74 +9,26 @@
 An Android app for [SillyTavern](https://github.com/SillyTavern/SillyTavern). It finds the
 SillyTavern instance on your home network, or connects to a remote HTTPS server, so you can carry on your chats from the phone.
 
-Your PC keeps doing the work. Characters, chats, settings and the AI backend stay where they are,
-and nothing has to be installed on the SillyTavern side. The app builds its prompts with a port of
-SillyTavern's own prompt code, so a reply you generate on the phone gets the same prompt it would
-get on the desktop.
-
-Status: beta. Android 7 or newer, 64-bit ARM phones.
-
-| Find your instance | Character page | Chat | Generation settings |
-|---|---|---|---|
-| ![Discovery](docs/media/discovery.png) | ![Character page](docs/media/character.png) | ![Chat](docs/media/chat.png) | ![Generation settings](docs/media/gensettings.png) |
+The native home provides recent conversations, character search, details and history. Chatting and
+editing run in one retained Android WebView using the actual SillyTavern frontend, including its
+prompt pipeline, cookies, plugins and message iframes. The modern navigation and responsive styles
+ship inside the APK; no companion extension needs to be installed on your server.
 
 ## What it does
 
-**Connect**
-- Scans local Wi-Fi, or connects manually using an HTTPS domain or a local IP and port.
-- Supports Caddy or SillyTavern HTTP Basic Auth, including authenticated images and streaming.
-- Remembers multiple servers and offers reconnect on the start page, even without local Wi-Fi.
+- Native server management, HTTPS domains, Caddy Basic Auth, secure credential storage and authenticated avatars.
+- Native recent chats and character browsing; continue, new chat, history and edit open the matching web context by avatar/file identity.
+- Modern chat navigation and full-width mobile editor panels for models, presets, prompts, world info, personas, characters, groups and extensions. Existing bound controls retain SillyTavern's save/import/export behavior.
+- Chat generation, stop, regeneration, swipes, variables and extension execution use SillyTavern itself.
+- Original-page fallback from the native toolbar. Known conflicting themes are reported, never disabled automatically.
+- English, German and Simplified Chinese; light, dark and system appearance; optional device-authentication lock.
+- Native file export confirmation and Android upload picker. Browser extensions may have additional device requirements.
 
-**Chat**
-- Replies stream in word by word, with the same smooth streaming option as the desktop.
-- Swipes, regenerate, continue, stop, impersonate. Alternate greetings show up as swipes on the
-  first message.
-- Edit, copy, hide and delete messages, branch a chat, rename and delete chats.
-- Reasoning blocks, image attachments for vision models (chat completion), read-aloud with the
-  phone's text-to-speech.
-- Markdown rendering that follows the desktop, including quoted speech and nested styles.
-
-**Same prompt as the desktop**
-- Macros, character fields, story string, instruct mode, example dialogues, Author's Note,
-  `@depth` injections and persona positions.
-- World Info with selective logic, inclusion groups, minimum activations and timed effects
-  (sticky, cooldown, delay). A lorebook panel shows which entries are active and lets you mute
-  single entries.
-- Token budgets come from SillyTavern's tokenizers. Tests compare the built prompt and the request
-  bodies with what the desktop produces.
-
-**Settings on the phone**
-- Pick the connection profile and the persona. Create, edit and delete personas.
-- Quick settings for temperature, response length and context size, plus a full screen with every
-  sampler SillyTavern offers for the active backend.
-- Edit context templates, instruct templates and the system prompt.
-- Changes go back to SillyTavern if you turn on "Sync with PC". Only the fields you touched are
-  written.
-
-**Around it**
-- Chats are saved back to the PC, with a conflict check if the chat changed there in the meantime.
-- Character pages hide the definitions until you ask for them, so you do not spoil a card by
-  opening it.
-- Cached characters and chats for reading offline, drafts survive a crash.
-- Optional app lock with fingerprint or device PIN.
-- English, German and Simplified Chinese, picked from the phone language or selected in Settings.
-
-## Supported backends
-
-The app does not talk to the AI backend directly. It sends the request to SillyTavern, and
-SillyTavern forwards it like it does for the desktop. So the backend has to be set up and connected
-in SillyTavern first.
-
-| SillyTavern API | Covered |
-|---|---|
-| Text Completion | KoboldCpp, llama.cpp, Ollama, TabbyAPI, Text Generation WebUI, vLLM, Aphrodite, OpenRouter, Mancer, TogetherAI, InfermaticAI, DreamGen, Featherless, HuggingFace, Generic |
-| Chat Completion | OpenAI, Claude, Google AI Studio, Vertex AI, OpenRouter, Mistral, Cohere, DeepSeek, xAI, Groq, Perplexity, Azure OpenAI, Custom and the other sources SillyTavern lists |
-| NovelAI | Clio, Kayra, Erato |
-| KoboldAI Classic | yes |
-| AI Horde | yes, with queue position in the chat |
-
-Not every backend has been run against a live server. If one misbehaves, please
-[report it](https://github.com/jacob-sheng/SillyTavernCompanionApp/issues).
+The modern adapter targets **SillyTavern 1.19.0**. Other versions offer the original page.
+See [compatibility and acceptance](docs/COMPATIBILITY.md) for tested combinations and remaining
+limitations. An available menu does not imply every third-party extension has been validated.
+Cached native data is for browsing only; it is never automatically written back as a conversation.
+The app does not promise generation while Android suspends or kills it.
 
 This fork uses its own signing key and application ID (`io.github.jacobsheng.stcompanion`).
 It installs alongside the upstream app; its in-app updater follows this fork's releases.
@@ -180,26 +132,26 @@ root-domain reverse proxy and disable SillyTavern account login for this setup.
 
 **"AI backend not connected" or "No response".**
 SillyTavern has no connection to the backend. Open SillyTavern on the PC, connect the API there and
-check that a model is selected. In the app, Settings shows which connection profile is active.
+check that a model is selected. Open Settings → Models in the app to configure the connection.
 
 **A reply looks different from the desktop.**
 That is a bug worth reporting. Include the backend, the connection profile type and, if you can,
 the request from the SillyTavern console.
 
-## Not supported
+## Compatibility boundaries
 
-- Group chats.
-- Variable macros that keep state (`getvar`, `setvar`).
-- SillyTavern's server-side TTS. The app reads aloud with the phone's own voice.
-- iOS, and 32-bit Android phones.
-
-Open work is on the [project board](https://github.com/users/DooDesch/projects/1), what shipped is
-in the [changelog](CHANGELOG.md).
+- Root-domain deployments and system-trusted TLS certificates only.
+- One Caddy Basic Auth layer protecting the entire root; no SillyTavern user-account login.
+- iOS and 32-bit Android are not supported.
+- MVU and Tavern Helper execute in the real webpage. Plugin/card compatibility requires testing;
+  the app does not provide a separate MVU implementation.
+- Old native generation, native TTS and draft recovery are replaced by the server webpage.
+  Existing legacy draft files are left untouched and are not uploaded automatically.
 
 ## Development
 
 The repo is a pnpm monorepo: `packages/core` holds the prompt engine and the SillyTavern client in
-plain TypeScript, `apps/mobile` is the Expo app. Setup, architecture, tests and the release build
+plain TypeScript, `packages/web-ui` holds the injected React shell and adapter, and `apps/mobile` is the Expo host. The legacy core prompt library remains tested but is no longer used to generate in the app. Setup, architecture, tests and the release build
 are in [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
 
 To publish the next prerelease, add entries under `[Unreleased]` in `CHANGELOG.md`, run

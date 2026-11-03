@@ -1,10 +1,13 @@
 import { requireOptionalNativeModule } from 'expo-modules-core';
 
 interface ScreenStateModule {
+  setSecureWindow: (enabled: boolean) => void;
   addListener(event: 'screenOff', listener: () => void): { remove: () => void };
 }
 
 const ScreenState = requireOptionalNativeModule<ScreenStateModule>('ScreenState');
+
+export function setSecureWindow(enabled: boolean): void { ScreenState?.setSecureWindow(enabled); }
 
 /**
  * Subscribe to display-off events (Android ACTION_SCREEN_OFF). Returns an unsubscribe

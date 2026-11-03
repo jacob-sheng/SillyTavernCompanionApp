@@ -1,15 +1,15 @@
+import { useTavern } from '@/stores/tavernStore';
+import { plainPreview } from '../../../../packages/web-ui/src/protocol';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
-import { Stack, router, useLocalSearchParams } from 'expo-router';
+import { Stack, useLocalSearchParams } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { getCharacter, getCharacterChats, type StCharacter } from '@st/core';
 import { useConnection } from '@/stores/connectionStore';
 import { Avatar } from '@/components/Avatar';
-import { RichText } from '@/components/RichText';
 import { ImageViewerModal } from '@/components/ImageViewerModal';
 import { ChatActionsSheets, type ChatTarget } from '@/components/ChatActionsSheets';
-import { nowSendDate } from '@/lib/messages';
 import { AppText, Button, Card, Chip, ListRow, SectionHeader, SkeletonList } from '@/components/ui';
 import { Icon } from '@/theme/icons';
 import { colors } from '@/theme/tokens';
@@ -83,7 +83,7 @@ function DefinitionCard({
                   {i + 1}/{content.length}
                 </AppText>
               ) : null}
-              <RichText text={block} />
+              <AppText>{plainPreview(block)}</AppText>
             </View>
           ))}
         </View>
@@ -146,12 +146,11 @@ export default function CharacterScreen() {
       !!character.data?.post_history_instructions);
 
   const openChat = (file: string) => {
-    router.push({ pathname: '/chat/[avatar]/[file]', params: { avatar: avatarUrl, file } });
+    useTavern.getState().open({ kind: 'character', avatar: avatarUrl, action: 'continue', file });
   };
 
   const newChat = () => {
-    const name = `${character?.name ?? 'Chat'} - ${nowSendDate()}`;
-    router.push({ pathname: '/chat/[avatar]/[file]', params: { avatar: avatarUrl, file: name, fresh: '1' } });
+    useTavern.getState().open({ kind: 'character', avatar: avatarUrl, action: 'new' });
   };
 
   return (
@@ -181,7 +180,7 @@ export default function CharacterScreen() {
             {/* Creator notes are MEANT for the player (unlike the definitions) - show them openly. */}
             {creatorNotes ? (
               <AppText selectable variant="body" color="muted" style={{ marginTop: 14, textAlign: 'center' }}>
-                {creatorNotes}
+                {plainPreview(creatorNotes)}
               </AppText>
             ) : null}
           </View>
@@ -191,7 +190,7 @@ export default function CharacterScreen() {
           </View>
         )}
 
-        <Button label={t('character.newChat')} leftIcon="plus" onPress={newChat} />
+        <View className="gap-2"><Button label={t('tavern.continueChat')} onPress={() => useTavern.getState().open({ kind: 'character', avatar: avatarUrl, action: 'continue' })} /><Button label={t('character.newChat')} variant="secondary" leftIcon="plus" onPress={newChat} /><Button label={t('tavern.editCharacter')} variant="ghost" onPress={() => useTavern.getState().open({ kind: 'character', avatar: avatarUrl, action: 'edit' })} /></View>
 
         <SectionHeader title={t('character.savedChats')} />
 
@@ -206,7 +205,7 @@ export default function CharacterScreen() {
                 <ListRow
                   key={chat.file_name}
                   title={file}
-                  subtitle={preview}
+                  subtitle={preview ? plainPreview(preview) : undefined}
                   subtitleLines={1}
                   chevron
                   onPress={() => openChat(file)}

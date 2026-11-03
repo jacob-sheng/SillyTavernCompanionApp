@@ -18,7 +18,7 @@ SillyTavernCompanionApp/                 pnpm monorepo
 │        personas, profiles, tokenizer, buildPrompt, textgenBody, chatcompletion/,
 │        kobold, horde, novelai, generate
 └─ apps/mobile/     Expo app (expo-router, NativeWind, TanStack Query, Zustand)
-   ├─ app/       onboarding/  (tabs)/  character/[avatar]  chat/[avatar]/[file]  settings/
+   ├─ app/       onboarding/  (tabs)/  character/[avatar]
    ├─ src/       lib/  components/  hooks/  stores/  theme/  i18n/
    ├─ modules/   screen-state (local Expo module: reports when the screen turns off)
    └─ plugins/   withReleaseSigning.js, withGradleProps.js (applied on `expo prebuild`)
@@ -26,17 +26,26 @@ SillyTavernCompanionApp/                 pnpm monorepo
 
 ## How it fits together
 
-SillyTavern stays the proxy. The app sends the same requests the web frontend sends, and the
-SillyTavern server does transport, tokenizing and the conversion for each provider. The app only
-ports the part that runs in the browser on the desktop: building the prompt and the request body.
+The native app reads character/chat lists through StClient. All chat execution and editing run
+inside the actual SillyTavern frontend in one retained WebView. The legacy core prompt library
+is still unit tested, but the app no longer calls it for generation.
 
-That is why `packages/core/src/prompt-engine` follows SillyTavern's client code closely
-(`public/scripts/*.js`). When something differs from the desktop, the fix is to read the matching
-desktop function and port what is missing. Tests compare built prompts and request bodies with
-output captured from the desktop.
+`packages/web-ui` builds a React shell, styles and TavernAdapter into an IIFE using esbuild.
+`pnpm --filter @st/web-ui build` writes the ignored generated TypeScript bundle in
+`apps/mobile/src/generated/tavernBundle.ts`. Mobile start, typecheck and prebuild build it first.
+Injection occurs after page loading and waits for the real context/settings readiness; it does
+not rely on Android document-start injection. Original page DOM and plugin iframes stay mounted.
 
-`@st/core` has no React Native imports. The app passes in its `fetch` implementation, so the whole
-engine can be tested without a device.
+The bridge protocol lives in `packages/web-ui/src/protocol.ts`. Commands/messages validate
+version, session, request IDs and typed targets. Credentials are never bridged. The native host
+checks the message page origin and uses SecureStore credentials only in the patched Android
+HTTP auth callback. See `patches/react-native-webview@14.0.1.patch`; retain this patch when
+upgrading WebView and rerun Android isolation tests. Server root protection is required.
+
+Settings/editor operations use upstream controls and handlers. Return-to-home awaits generation
+stop and chat save. Query invalidation and native focus refresh update browsing data; old caches
+are invalidated rather than uploaded. Preference changes keep theme live and recreate the hidden
+browser for language changes without replaying its last mutation.
 
 ## Stack
 
@@ -171,3 +180,23 @@ an additional backup and must never be committed to the public repository.
 The fork uses application ID `io.github.jacobsheng.stcompanion`, display name
 `SillyTavern Companion CN`, and the releases of `jacob-sheng/SillyTavernCompanionApp` for updates.
 It installs independently of the upstream app, whose signing key cannot be reused by this fork.
+
+## Hybrid integration fixture
+
+CI starts SillyTavern at the commit recorded in [COMPATIBILITY.md](COMPATIBILITY.md), then runs:
+
+```sh
+pnpm --filter @st/web-ui build
+pnpm --filter @st/web-ui exec playwright install chromium
+pnpm --filter @st/web-ui exec playwright test
+```
+
+The browser fixture expects port 8190 (override ST_TEST_URL). Playwright starts a deterministic
+local streaming model on port 8192. Never point these tests at a user's production instance:
+they create characters/chats and change model settings. Optional plugin checks use ST_TEST_MVU
+pointing to the pinned MVU bundle, with the pinned helper installed in that isolated instance.
+
+On Windows, use a short source checkout outside OneDrive for native builds. Older SDK-bundled
+Ninja can reject generated filenames longer than 260 characters. Set STC_NINJA_PATH to an
+independently installed Ninja 1.13.2 executable before Gradle; the config plugin passes it to
+CMake. CI Linux builds do not need this variable. Never copy signing secrets into test fixtures.

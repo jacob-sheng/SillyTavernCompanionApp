@@ -1,3 +1,4 @@
+import { plainPreview } from '../../../../packages/web-ui/src/protocol';
 import { memo, useMemo, useState } from 'react';
 import { TextInput, View } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
@@ -34,7 +35,7 @@ const CharacterCard = memo(function CharacterCard({ character }: { character: St
             </AppText>
           ) : null}
           <AppText variant="body" color="muted" numberOfLines={2} style={{ marginTop: 4 }}>
-            {notes}
+            {plainPreview(notes)}
           </AppText>
           {tags.length ? (
             <View className="mt-2 flex-row flex-wrap gap-1.5">

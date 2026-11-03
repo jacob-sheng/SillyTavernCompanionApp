@@ -2,7 +2,7 @@ import { ActivityIndicator } from 'react-native';
 import { PressableScale } from './animated';
 import { AppText, type TextColor } from './AppText';
 import { Icon, type IconName } from '@/theme/icons';
-import { colors } from '@/theme/tokens';
+import { useThemeColors } from '@/theme/useThemeColors';
 import { haptics } from '@/theme/haptics';
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
@@ -22,12 +22,7 @@ const LABEL_COLOR: Record<Variant, TextColor> = {
   danger: 'danger',
 };
 
-const ICON_COLOR: Record<Variant, string> = {
-  primary: colors.onAccent,
-  secondary: colors.text,
-  ghost: colors.textMuted,
-  danger: colors.danger,
-};
+
 
 export interface ButtonProps {
   label: string;
@@ -52,6 +47,13 @@ export function Button({
   fullWidth = true,
   haptic = true,
 }: ButtonProps) {
+  const colors = useThemeColors();
+  const ICON_COLOR: Record<Variant, string> = {
+  primary: colors.onAccent,
+  secondary: colors.text,
+  ghost: colors.textMuted,
+  danger: colors.danger,
+};
   const isDisabled = disabled || loading;
 
   return (

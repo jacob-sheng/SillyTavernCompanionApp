@@ -36,3 +36,7 @@ apps/mobile/modules/**/android/build/
 
 # Agent worktrees
 .claude/worktrees/
+
+# Local build/research artifacts
+.cache/
+apps/mobile/src/generated/

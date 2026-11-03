@@ -2,6 +2,8 @@ import { useCallback, useMemo, useState } from 'react';
 import { View } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { router, useFocusEffect } from 'expo-router';
+import { useTavern } from '@/stores/tavernStore';
+import { plainPreview } from '../../../../packages/web-ui/src/protocol';
 import { useQuery, useQueries, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { getAllCharacters, getCharacterChats, type ChatFileInfo, type StCharacter } from '@st/core';
@@ -75,7 +77,7 @@ function RecentChatRow({
   }, [data, character.chat]);
 
   const fileId = chat?.file_id ?? character.chat ?? '';
-  const preview = (chat?.mes ?? '').replace(/\s+/g, ' ').trim();
+  const preview = plainPreview(chat?.mes ?? '');
   const time = relativeTime(Number(chat?.last_mes ?? character.date_last_chat));
 
   return (
@@ -85,7 +87,7 @@ function RecentChatRow({
       meta={time}
       subtitle={isLoading ? t('common.loading') : preview || t('chats.noMessages')}
       onPress={() =>
-        router.push({ pathname: '/chat/[avatar]/[file]', params: { avatar: character.avatar, file: fileId } })
+        useTavern.getState().open({ kind: 'character', avatar: character.avatar, action: 'continue', ...(fileId ? { file: fileId } : {}) })
       }
       onLongPress={() => {
         if (!fileId) return;
@@ -108,7 +110,7 @@ function ChatFileRow({
 }) {
   const { t } = useTranslation();
   const fileId = chat.file_id ?? chat.file_name?.replace(/\.jsonl$/i, '') ?? '';
-  const preview = (chat.mes ?? '').replace(/\s+/g, ' ').trim();
+  const preview = plainPreview(chat.mes ?? '');
   return (
     <ListRow
       leading={<Avatar avatar={character.avatar} name={character.name} size={52} />}
@@ -116,7 +118,7 @@ function ChatFileRow({
       meta={relativeTime(Number(chat.last_mes))}
       subtitle={`${chatFileLabel(character, chat)}\n${preview || t('chats.noMessages')}`}
       onPress={() =>
-        router.push({ pathname: '/chat/[avatar]/[file]', params: { avatar: character.avatar, file: fileId } })
+        useTavern.getState().open({ kind: 'character', avatar: character.avatar, action: 'continue', ...(fileId ? { file: fileId } : {}) })
       }
       onLongPress={() => {
         if (!fileId) return;
