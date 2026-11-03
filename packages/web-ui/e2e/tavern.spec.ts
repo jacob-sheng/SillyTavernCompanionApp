@@ -23,7 +23,7 @@ async function load(page: Page, original = false, theme = 'dark') {
 test('light editors have readable helper text and acknowledge their first panel title', async ({ page }) => {
   await load(page, false, 'light');
   await navigate(page, 'first-panel', { kind: 'panel', panel: 'models' });
-  await expect(page.locator('#stc-root .stc-heading strong')).not.toHaveText('Tavern');
+  await expect(page.locator('#stc-root .stc-heading strong')).toHaveText('模型与连接');
   const helper = page.locator('#rm_api_block small').first();
   await expect(helper).toHaveCSS('color', 'rgb(99, 99, 116)');
   await expect(helper).toHaveCSS('opacity', '1');
@@ -101,6 +101,10 @@ test('retained group navigation discovers new groups and rejects deleted groups'
     return (await response.json()).id;
   });
   await navigate(page, 'new-group', { kind: 'group', groupId });
+  await page.route('**/api/groups/all', route => route.fulfill({ status: 403, body: 'Forbidden' }));
+  await page.evaluate(groupId => (window as any).__STC_RECEIVE__({ version: 1, session: 'test', id: 'offline-group', type: 'navigate', target: { kind: 'group', groupId } }), groupId);
+  await expect.poll(() => page.evaluate(() => (window as any).messages.find((m: any) => m.id === 'offline-group'))).toMatchObject({ ok: false, code: 'network' });
+  await page.unroute('**/api/groups/all');
   await page.evaluate(async groupId => {
     const ctx = (window as any).SillyTavern.getContext();
     const response = await fetch('/api/groups/delete', { method: 'POST', headers: ctx.getRequestHeaders(), body: JSON.stringify({ id: groupId }) });

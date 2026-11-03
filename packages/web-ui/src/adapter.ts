@@ -59,6 +59,13 @@ export class TavernAdapter {
     await this.idle();
     if (target.kind === 'panel') { await this.openPanel(target.panel); return; }
     if (target.kind === 'group') {
+      // Upstream getGroups silently ignores non-OK responses. Verify availability
+      // and identity independently so a retained list cannot authorize stale chats.
+      const response = await fetch('/api/groups/all', { method: 'POST', headers: this.context().getRequestHeaders(), cache: 'no-store', signal: AbortSignal.timeout(15000) });
+      if (!response.ok) throw new Error('network');
+      const current = await response.json() as { id: string | number }[];
+      if (!Array.isArray(current)) throw new Error('network');
+      if (!current.some(group => String(group.id) === target.groupId)) throw new Error('missing');
       const url = new URL('/scripts/group-chats.js', location.origin).href;
       const groups = await import(/* @vite-ignore */ url) as { groups: { id: string; chats: string[]; chat_id: string }[]; getGroups: () => Promise<void>; openGroupById: (id: string) => Promise<boolean> };
       await groups.getGroups();
