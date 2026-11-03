@@ -26,7 +26,7 @@ const config: ExpoConfig = {
   name: 'SillyTavern Companion CN',
   slug: 'sillytavern-companion',
   scheme: 'stcompanion',
-  version: '0.18.1',
+  version: '0.18.2',
   orientation: 'portrait',
   userInterfaceStyle: 'dark',
   // New Architecture is the default (and only) arch on SDK 56 / RN 0.85, so an explicit
@@ -46,7 +46,7 @@ const config: ExpoConfig = {
   },
   android: {
     package: 'io.github.jacobsheng.stcompanion',
-    versionCode: 21,
+    versionCode: 22,
     adaptiveIcon: {
       foregroundImage: './assets/adaptive-icon.png',
       monochromeImage: './assets/adaptive-icon-monochrome.png',

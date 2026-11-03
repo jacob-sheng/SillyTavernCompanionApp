@@ -6,6 +6,12 @@ Android `versionCode` increases by 1 per release (0.9.0 = 2).
 
 ## [Unreleased]
 
+## [0.18.2] - 2026-11-03 (Beta)
+
+### Fixed
+- Recognize the actual `V2 Signer:` certificate output used by the GitHub Android runner; the signed APK certificate is unchanged.
+- This prerelease includes HTTPS/Caddy Basic Auth, complete Simplified Chinese UI, and repository-managed automatic signed releases.
+
 ## [0.18.1] - 2026-11-03 (Beta)
 
 ### Fixed

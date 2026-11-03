@@ -4,6 +4,8 @@ import { verifySignature } from './verify-signature.mjs';
 const cert = 'ab'.repeat(32);
 test('accepts legacy and SDK-range signer output without weakening certificate checks', () => {
   verifySignature(`Signer #1 certificate SHA-256 digest: ${cert}\n`, cert);
+  verifySignature(`V2 Signer: certificate SHA-256 digest: ${cert}\n`, cert);
+  verifySignature(`V3.1 Signer: certificate SHA-256 digest: ${cert}\n`, cert);
   verifySignature(`Signer (minSdkVersion=24, maxSdkVersion=2147483647) #1 certificate SHA-256 digest: ${cert}\n`, cert);
   verifySignature(`Signer #1 certificate SHA-256 digest: ${cert}\nSigner #1 certificate SHA-256 digest: ${cert}\n`, cert);
   assert.throws(() => verifySignature(`Signer #1 certificate SHA-256 digest: ${'cd'.repeat(32)}\n`, cert));
