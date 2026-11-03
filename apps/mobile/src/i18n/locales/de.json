@@ -97,7 +97,7 @@
     "confirmRegenerate": "Aktuelle Antwort verwerfen und neu generieren?",
     "confirmRegenerateGo": "Neu generieren",
     "confirmRegenerateTitle": "Neu generieren?",
-    "conflictMessage": "Der PC hat diesen Chat seit dem Laden geändert.",
+    "conflictMessage": "Der Chat auf dem Server wurde seit dem Laden geändert.",
     "conflictTitle": "Konflikt",
     "continue": "Fortsetzen",
     "continueExtend": "Fortsetzen (letzte Antwort verlängern)",
@@ -173,11 +173,11 @@
   "formatting": {
     "context": "Kontextvorlage",
     "copyDefaultName": "{{name}} (Kopie)",
-    "copySavedMessage": "„{{name}}\" wurde auf dem PC gespeichert. Jetzt als aktive Vorlage verwenden?",
+    "copySavedMessage": "„{{name}}\" wurde auf dem Server gespeichert. Jetzt als aktive Vorlage verwenden?",
     "copySavedTitle": "Kopie gespeichert",
     "copyTitle": "Als Kopie speichern",
     "deleteBlocked": "Diese Vorlage ist gerade ausgewählt. Wähle zuerst eine andere, dann kannst du sie löschen.",
-    "deleteConfirm": "„{{name}}\" wirklich löschen? Die Datei wird vom PC entfernt.",
+    "deleteConfirm": "„{{name}}“ wirklich löschen? Die Datei wird vom Server entfernt.",
     "deleteFailed": "Vorlage konnte nicht gelöscht werden.",
     "deleteTitle": "Vorlage löschen",
     "edit": "Vorlage bearbeiten",
@@ -232,7 +232,7 @@
     "missing": "Vorlage nicht gefunden.",
     "nameTaken": "Eine Vorlage mit diesem Namen existiert bereits.",
     "profileOverride": "Das Verbindungsprofil „{{profile}}\" legt „{{template}}\" fest - beim Generieren gewinnt diese Vorlage.",
-    "savedNotice": "Änderungen werden direkt in SillyTavern (PC) übernommen.",
+    "savedNotice": "Änderungen werden direkt in SillyTavern (Server) übernommen.",
     "saveFailed": "Vorlage konnte nicht gespeichert werden. Ist SillyTavern erreichbar?",
     "sections": {
       "assistant": "Assistant-Nachrichten",
@@ -245,13 +245,13 @@
       "user": "User-Nachrichten"
     },
     "selectedBadge": "aktiv",
-    "selectFailed": "Konnte nicht mit dem PC synchronisiert werden.",
+    "selectFailed": "Konnte nicht mit dem Server synchronisiert werden.",
     "sysprompt": "System-Prompt",
     "template": "Vorlage",
     "title": "Erweiterte Formatierung",
     "useCopy": "Kopie auswählen",
-    "writeWarning": "Beim Speichern wird die Vorlagen-Datei auf dem PC überschrieben (data-Ordner). „Als Kopie speichern\" lässt das Original unverändert.",
-    "writeWarningTitle": "Vorlage auf dem PC speichern?"
+    "writeWarning": "Beim Speichern wird die Vorlagen-Datei auf dem Server überschrieben (data-Ordner). „Als Kopie speichern\" lässt das Original unverändert.",
+    "writeWarningTitle": "Vorlage auf dem Server speichern?"
   },
   "genSettings": {
     "discardMessage": "Ungespeicherte Änderungen gehen verloren.",
@@ -353,7 +353,7 @@
       "xtc": "XTC"
     },
     "title": "Alle Generierungs-Einstellungen",
-    "writeWarning": "Änderungen werden in die Einstellungen auf dem PC geschrieben (wie bei den Schnell-Einstellungen). Nur geänderte Felder werden übertragen.",
+    "writeWarning": "Änderungen werden in die Einstellungen auf dem Server geschrieben (wie bei den Schnell-Einstellungen). Nur geänderte Felder werden übertragen.",
     "writeWarningTitle": "In SillyTavern speichern?"
   },
   "lock": {
@@ -373,13 +373,13 @@
   "onboarding": {
     "connect": "Verbinden",
     "connectionFailed": "Verbindung fehlgeschlagen",
-    "findDescription": "Suche im WLAN nach einer laufenden Instanz. Dein Handy muss im selben Netz wie der PC sein.",
+    "findDescription": "Lokales WLAN durchsuchen, gespeicherten Server verbinden oder entfernte HTTPS-Adresse eingeben.",
     "findTitle": "SillyTavern finden",
     "ipAddress": "IP-Adresse",
-    "manualDescription": "IP-Adresse und Port deiner SillyTavern-Instanz eingeben.",
-    "manualPair": "Manuell per IP koppeln",
+    "manualDescription": "Mit einem entfernten HTTPS-Server oder einer lokalen SillyTavern-Instanz verbinden. Falls Caddy oder SillyTavern Basic Auth erfordert, Zugangsdaten eingeben.",
+    "manualPair": "Manuell verbinden",
     "manualTitle": "Manuell koppeln",
-    "noInstanceFound": "Keine Instanz gefunden. Manuell per IP koppeln.",
+    "noInstanceFound": "Keine lokale Instanz gefunden. Manuell über Server-URL oder IP-Adresse verbinden.",
     "noLocalIp": "Keine lokale IP-Adresse - bist du mit dem WLAN verbunden?",
     "notReachable": "Keine SillyTavern-Instanz unter dieser Adresse erreichbar.",
     "password": "Passwort (optional)",
@@ -389,7 +389,12 @@
     "scanning": "Netzwerk wird gescannt…",
     "scanningButton": "Scanne…",
     "tagline": "Deine Charaktere, für unterwegs.",
-    "username": "Benutzername (optional, bei Basic-Auth)"
+    "username": "Benutzername (optional, bei Basic-Auth)",
+    "urlMode": "Server-URL",
+    "lanMode": "Lokale IP + Port",
+    "serverUrl": "Server-URL",
+    "editConnection": "Verbindung bearbeiten",
+    "invalidCredentials": "Bei Verwendung eines Passworts einen Benutzernamen eingeben. Benutzername ohne Doppelpunkte oder Zeilenumbrüche; Passwort ohne Zeilenumbrüche."
   },
   "personas": {
     "changePicture": "Bild ändern",
@@ -433,7 +438,7 @@
     "allSettings": "Alle Generierungs-Einstellungen",
     "contextSize": "Kontextgröße (Tokens)",
     "responseLength": "Antwortlänge (Tokens)",
-    "savedNotice": "Wird auf SillyTavern (PC) gespeichert.",
+    "savedNotice": "Wird auf SillyTavern (Server) gespeichert.",
     "smoothStreaming": "Sanftes Streaming",
     "smoothStreamingHint": "Nur Darstellung in der App: Text erscheint Wort für Wort.",
     "streaming": "Streaming",
@@ -488,7 +493,7 @@
     "security": "Sicherheit",
     "selectEllipsis": "Auswählen…",
     "sillyTavern": "SillyTavern",
-    "syncToPc": "Mit PC synchronisieren",
+    "syncToPc": "Mit Server synchronisieren",
     "syncToPcSubtitle": "Persona-/Profil-/Sampler-Änderungen am Handy zurück an SillyTavern schreiben.",
     "tapToConnect": "Tippen zum Verbinden",
     "textCompletion": "Text-Completion",
@@ -508,5 +513,29 @@
     "characters": "Charaktere",
     "chats": "Chats",
     "settings": "Einstellungen"
+  },
+  "connectionErrors": {
+    "invalidUrl": "HTTP/HTTPS-Serveradresse ohne Pfad, Abfrage, Fragment oder eingebettete Zugangsdaten eingeben.",
+    "unauthorized": "Anmeldung fehlgeschlagen. Basic-Auth-Benutzername und Passwort prüfen.",
+    "forbidden": "Zugriff verweigert. Caddy-Regeln und SillyTavern-Whitelist prüfen.",
+    "notSillyTavern": "Diese Adresse liefert keine nutzbare SillyTavern-Sitzung. Reverse Proxy und Benutzeranmeldung prüfen.",
+    "timeout": "Zeitüberschreitung. Erneut versuchen.",
+    "cancelled": "Verbindung abgebrochen.",
+    "network": "Verbindung fehlgeschlagen. Adresse, Netzwerk und TLS-Zertifikat prüfen.",
+    "server": "Der Server meldet einen HTTP-Fehler. Server und Reverse Proxy prüfen."
+  },
+  "options": {
+    "none": "Keine",
+    "groupsPast": "Gruppen und Verlauf",
+    "always": "Immer",
+    "off": "Aus",
+    "default": "Standard",
+    "completion": "Vervollständigung",
+    "content": "Inhalt",
+    "auto": "Automatisch",
+    "low": "Niedrig",
+    "medium": "Mittel",
+    "high": "Hoch",
+    "max": "Maximum"
   }
 }

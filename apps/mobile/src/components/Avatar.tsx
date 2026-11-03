@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { Image, Text, View } from 'react-native';
+import { ServerImage } from '@/components/ServerImage';
+import { useEffect, useState } from 'react';
+import { Text, View } from 'react-native';
 import { useConnection } from '@/stores/connectionStore';
 import { fonts } from '@/theme/tokens';
 
@@ -30,18 +31,20 @@ export function Avatar({
   /** Bump to bust the image cache after replacing the underlying file. */
   cacheKey?: string | number;
 }) {
-  const baseUrl = useConnection((s) => s.instance?.baseUrl);
+  const client = useConnection((s) => s.client);
+  const baseUrl = client?.baseUrl;
   const [failed, setFailed] = useState(false);
   const uri = baseUrl
     ? `${baseUrl}/thumbnail?type=${type}&file=${encodeURIComponent(avatar)}${cacheKey != null ? `&v=${encodeURIComponent(String(cacheKey))}` : ''}`
     : undefined;
+  useEffect(() => setFailed(false), [uri, client]);
   const radius = size / 2;
   const ringStyle = ring ? { borderWidth: 2, borderColor: '#7C5CFF' } : null;
 
   if (uri && !failed) {
     return (
-      <Image
-        source={{ uri }}
+      <ServerImage
+        uri={uri}
         onError={() => setFailed(true)}
         style={[{ width: size, height: size, borderRadius: radius }, ringStyle]}
       />

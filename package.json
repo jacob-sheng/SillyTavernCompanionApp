@@ -1,7 +1,7 @@
 {
   "name": "sillytavern-companion",
   "private": true,
-  "version": "0.17.1",
+  "version": "0.18.0",
   "engines": {
     "node": ">=20"
   },
@@ -9,7 +9,10 @@
     "test": "pnpm -r test",
     "typecheck": "pnpm -r typecheck",
     "lint": "pnpm -r lint",
-    "core:test": "pnpm --filter @st/core test"
+    "core:test": "pnpm --filter @st/core test",
+    "release:bump": "node scripts/release/prepare.mjs",
+    "release:check": "node scripts/release/check.mjs",
+    "release:test": "node --test scripts/release/*.test.mjs"
   },
   "devDependencies": {
     "@resvg/resvg-js": "^2.6.2",

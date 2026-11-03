@@ -3,25 +3,22 @@ name: Release
 on:
   push:
     tags: ['v*']
-    # Cache warm-up: a tag run may only read caches, and only those of the default branch. A
-    # build on main after a change to the native setup saves the Gradle cache that tag runs reuse.
-    branches: [main]
-    paths:
-      - pnpm-lock.yaml
-      - apps/mobile/package.json
-      - apps/mobile/app.config.ts
-      - apps/mobile/plugins/**
-      - apps/mobile/modules/**
-      - .github/workflows/release.yml
-  # Dry run: builds and uploads the APK as a workflow artifact, creates NO release.
-  workflow_dispatch: {}
-  # Called by auto-release.yml after it pushed the release commit and tag. A tag pushed with the
-  # workflow token starts no workflow, so the release build runs as part of that run.
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing version tag to build and publish as a prerelease
+        required: true
+        type: string
+  # Tags pushed by GITHUB_TOKEN do not trigger workflows; Auto release calls this directly.
   workflow_call:
     inputs:
       tag:
         type: string
         required: true
+
+concurrency:
+  group: release-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
 
 permissions:
   contents: write
@@ -29,13 +26,15 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     env:
-      # Release tag: the called input, the pushed tag, or empty for warm-up and dry runs.
+      # Release tag from a reusable/manual call or a tag push.
       TAG: ${{ inputs.tag || (github.ref_type == 'tag' && github.ref_name) || '' }}
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.tag || '' }}
+          ref: ${{ inputs.tag || github.ref }}
+          fetch-depth: 0
       - uses: pnpm/action-setup@v4 # version from package.json "packageManager"
       - uses: actions/setup-node@v4
         with:
@@ -48,15 +47,17 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
 
       - run: pnpm install --frozen-lockfile
+      - run: pnpm -r typecheck
+      - run: pnpm -r test
+      - run: pnpm --filter mobile lint
+      - run: node --test scripts/release/*.test.mjs
+      - run: node scripts/release/check.mjs
 
-      - name: Verify tag matches app version
-        if: env.TAG != ''
-        working-directory: apps/mobile
+      - name: Verify tag matches app version and checkout
         run: |
-          TAG_VERSION="${TAG#v}"; TAG_VERSION="${TAG_VERSION%%-*}"
-          APP_VERSION=$(npx expo config --json --type public | jq -r '.version')
-          if [ "$TAG_VERSION" != "$APP_VERSION" ]; then
-            echo "::error::tag version $TAG_VERSION does not match app.config.ts version $APP_VERSION"
+          APP_VERSION=$(node -p "require('./package.json').version")
+          if [ "$TAG" != "v$APP_VERSION" ] || [ "$(git rev-list -n 1 "$TAG")" != "$(git rev-parse HEAD)" ]; then
+            echo '::error::Release tag must match the checked-out app version and commit.'
             exit 1
           fi
 
@@ -88,14 +89,22 @@ jobs:
 
       # The signing plugin falls back to the debug keystore by design (local dev convenience),
       # so a missing/broken secret must hard-fail HERE - a debug-signed "release" never ships.
-      - name: Guard - APK must be signed with the release upload key
+      - name: Guard - APK must be signed with this fork's release key
+        env:
+          EXPECTED_CERT: ${{ vars.ANDROID_SIGNING_CERT_SHA256 }}
         run: |
+          if ! [[ "$EXPECTED_CERT" =~ ^[0-9a-fA-F]{64}$ ]]; then
+            echo '::error::ANDROID_SIGNING_CERT_SHA256 repository variable is missing or invalid.'
+            exit 1
+          fi
           APK=apps/mobile/android/app/build/outputs/apk/release/app-release.apk
           BT="$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)"
           CERTS=$("$BT/apksigner" verify --print-certs "$APK")
-          echo "$CERTS"
-          echo "$CERTS" | grep -qi 'cc35a4276381a88ac475be689b334185050799ec933b321bd8341c00a8368f95' \
-            || { echo "::error::APK is not signed with the release key (debug fallback?)"; exit 1; }
+          ACTUAL=$(printf '%s\n' "$CERTS" | sed -n 's/^Signer #1 certificate SHA-256 digest: //p')
+          if [ "${ACTUAL,,}" != "${EXPECTED_CERT,,}" ]; then
+            echo '::error::APK certificate does not match this fork (debug fallback or wrong key).'
+            exit 1
+          fi
 
       - name: Upload R8 mapping (deobfuscation)
         uses: actions/upload-artifact@v4
@@ -103,13 +112,6 @@ jobs:
           name: mapping-${{ env.TAG || github.run_number }}
           path: apps/mobile/android/app/build/outputs/mapping/release/mapping.txt
           if-no-files-found: warn
-
-      - name: Dry-run artifact (manual runs only)
-        if: github.event_name == 'workflow_dispatch' && env.TAG == ''
-        uses: actions/upload-artifact@v4
-        with:
-          name: SillyTavernCompanion-dryrun
-          path: apps/mobile/android/app/build/outputs/apk/release/app-release.apk
 
       - name: Extract CHANGELOG section
         if: env.TAG != ''
@@ -131,4 +133,5 @@ jobs:
           tag_name: ${{ env.TAG }}
           files: SillyTavernCompanion-${{ env.TAG }}.apk
           body_path: ${{ runner.temp }}/notes.md
-          prerelease: ${{ startsWith(env.TAG, 'v0.') || contains(env.TAG, '-') }}
+          prerelease: true
+          make_latest: false

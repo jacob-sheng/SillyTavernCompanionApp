@@ -11,8 +11,8 @@ import * as IntentLauncher from 'expo-intent-launcher';
  */
 // NOT /releases/latest: that endpoint only knows stable releases and 404s while every
 // release of this app is still marked as a pre-release (beta).
-const RELEASES_API = 'https://api.github.com/repos/DooDesch/SillyTavernCompanionApp/releases?per_page=10';
-export const RELEASES_URL = 'https://github.com/DooDesch/SillyTavernCompanionApp/releases';
+const RELEASES_API = 'https://api.github.com/repos/jacob-sheng/SillyTavernCompanionApp/releases?per_page=10';
+export const RELEASES_URL = 'https://github.com/jacob-sheng/SillyTavernCompanionApp/releases';
 
 export interface UpdateInfo {
   version: string;

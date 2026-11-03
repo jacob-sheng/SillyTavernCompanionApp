@@ -8,6 +8,7 @@ interface ConnectionState {
   instance: DiscoveredInstance | null;
   client: StClient | null;
   connect: (instance: DiscoveredInstance, basicAuth?: BasicAuthCredentials) => void;
+  activate: (instance: DiscoveredInstance, client: StClient) => void;
   disconnect: () => void;
 }
 
@@ -19,7 +20,9 @@ export const useConnection = create<ConnectionState>((set) => ({
   connect: (instance, basicAuth) => {
     rememberBaseUrl(instance.baseUrl);
     // Persist this host as the last-known-good ST so future discovery probes it first.
-    void rememberStHint(instance.ip, instance.port);
+    if (instance.baseUrl.startsWith('http://') && /^\d+\.\d+\.\d+\.\d+$/.test(instance.ip)) {
+      void rememberStHint(instance.ip, instance.port);
+    }
     set({
       instance,
       client: new StClient({
@@ -28,6 +31,13 @@ export const useConnection = create<ConnectionState>((set) => ({
         ...(basicAuth ? { basicAuth } : {}),
       }),
     });
+  },
+  activate: (instance, client) => {
+    rememberBaseUrl(instance.baseUrl);
+    if (instance.baseUrl.startsWith('http://') && /^\d+\.\d+\.\d+\.\d+$/.test(instance.ip)) {
+      void rememberStHint(instance.ip, instance.port);
+    }
+    set({ instance, client });
   },
   disconnect: () => set({ instance: null, client: null }),
 }));

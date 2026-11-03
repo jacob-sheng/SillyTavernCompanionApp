@@ -1,4 +1,6 @@
-import { Image, Modal, Pressable, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
+import { ServerImage } from '@/components/ServerImage';
+import { Modal, Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/theme/icons';
 
@@ -15,16 +17,17 @@ export function ImageViewerModal({
   uri?: string;
   onClose: () => void;
 }) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   return (
     <Modal visible={visible && !!uri} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
       <Pressable className="flex-1 bg-black" onPress={onClose}>
         {uri ? (
-          <Image source={{ uri }} style={{ flex: 1, width: '100%', height: '100%' }} resizeMode="contain" />
+          <ServerImage uri={uri} style={{ flex: 1, width: '100%', height: '100%' }} resizeMode="contain" />
         ) : null}
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Close"
+          accessibilityLabel={t('common.close')}
           onPress={onClose}
           style={{ position: 'absolute', top: insets.top + 8, right: 16 }}
           className="h-10 w-10 items-center justify-center rounded-full bg-white/15 active:opacity-70"

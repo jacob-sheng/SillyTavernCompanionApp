@@ -30,7 +30,7 @@ function output(tag) {
   if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, `tag=${tag}\n`);
 }
 
-const read = (file) => readFileSync(join(root, file), 'utf8');
+const read = (file) => readFileSync(join(root, file), 'utf8').replace(/\r\n/g, '\n');
 const dryRun = process.argv.includes('--dry-run');
 const write = (file, text) => {
   if (!dryRun) writeFileSync(join(root, file), text);

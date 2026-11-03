@@ -253,7 +253,7 @@ export default function GenerationSettingsScreen() {
             label={label}
             hint={hint}
             value={valueOf(field) as number | string}
-            options={field.options ?? []}
+            options={(field.options ?? []).map((option) => ({ ...option, label: option.labelKey ? t(option.labelKey) : option.label }))}
             onChange={(v) => setValue(field.key, v)}
             onLongPress={onLongPress}
           />
@@ -266,7 +266,7 @@ export default function GenerationSettingsScreen() {
             label={label}
             hint={hint}
             value={Array.isArray(v) ? (v as number[]) : KOBOLDCPP_ORDER}
-            itemLabels={SAMPLER_LABELS}
+            itemLabels={{ ...SAMPLER_LABELS, 5: t('genSettings.fields.temp'), 6: t('genSettings.fields.rep_pen') }}
             onChange={(arr) => setValue(field.key, arr)}
             onLongPress={onLongPress}
           />

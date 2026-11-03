@@ -1,8 +1,9 @@
 import { create } from 'zustand';
 import { secrets } from '@/lib/storage';
 import i18n, { deviceLanguage, type AppLanguage } from '@/i18n';
+import { isAppLanguage } from '@/i18n/languages';
 
-/** Language preference: 'system' follows the device, otherwise a forced 'de'/'en'. Persisted. */
+/** Language preference: 'system' follows the device, otherwise a supported locale. Persisted. */
 export type LanguagePref = 'system' | AppLanguage;
 
 const KEY_LANG = 'app.language';
@@ -23,7 +24,7 @@ export const useLocale = create<LocaleState>((set) => ({
   hydrate: async () => {
     try {
       const stored = (await secrets.get(KEY_LANG)) as LanguagePref | null;
-      if (stored === 'de' || stored === 'en' || stored === 'system') {
+      if (isAppLanguage(stored) || stored === 'system') {
         set({ pref: stored });
         apply(stored);
       }

@@ -234,7 +234,7 @@ export default function TemplateEditorScreen() {
             label={label}
             hint={hint}
             value={valueOf(field) as number | string}
-            options={field.options ?? []}
+            options={(field.options ?? []).map((option) => ({ ...option, label: option.labelKey ? t(option.labelKey) : option.label }))}
             onChange={(v) => setValue(field.key, v)}
             onLongPress={onLongPress}
           />

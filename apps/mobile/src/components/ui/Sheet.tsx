@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { type ReactNode, useEffect, useState } from 'react';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -35,6 +36,7 @@ export function Sheet({
   title?: string;
   children: ReactNode;
 }) {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const reduced = useReducedMotion();
   const keyboard = useReanimatedKeyboardAnimation();
@@ -109,7 +111,7 @@ export function Sheet({
           root inside it, or every GestureDetector in the sheet (handle pan, sliders) is dead. */}
       <GestureHandlerRootView style={{ flex: 1, justifyContent: 'flex-end' }}>
         <AnimatedPressable
-          accessibilityLabel="Close"
+          accessibilityLabel={t('common.close')}
           style={[StyleSheet.absoluteFill, backdropStyle, { backgroundColor: colors.scrim }]}
           onPress={onClose}
         />

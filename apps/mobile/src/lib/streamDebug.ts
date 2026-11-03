@@ -14,7 +14,6 @@ export const streamDebug = {
     if (!__DEV__ || events.length === 0) return;
     const first = events[0]!.t;
     const compact = events.map((e) => `${e.kind === 'sse' ? 's' : 'r'}@${e.t - first}:${e.len}`).join(' ');
-    // eslint-disable-next-line no-console
     console.log(`[stream:${label}] ${events.length} marks - ${compact}`);
     events.length = 0;
   },

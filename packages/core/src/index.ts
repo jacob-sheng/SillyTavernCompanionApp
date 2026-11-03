@@ -19,7 +19,9 @@ export type {
 export type { FetchLike, FetchInitLike, FetchResponseLike } from './net/http';
 
 // Connection / API
-export { StClient } from './connection/StClient';
+export { StClient, StHttpError, StProtocolError } from './connection/StClient';
+export { normalizeServerUrl, validateConnection, ConnectionError } from './connection/connect';
+export type { ConnectionErrorCode, ValidatedConnection } from './connection/connect';
 export type { StClientOptions, StResponse, StRequestInit, BasicAuthCredentials } from './connection/StClient';
 export { CookieJar, readSetCookie, splitSetCookieHeader } from './connection/cookies';
 export {

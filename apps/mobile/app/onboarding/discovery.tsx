@@ -1,3 +1,5 @@
+import { useServers } from '@/stores/serversStore';
+import { useServerConnect } from '@/hooks/useServerConnect';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { Stack, router } from 'expo-router';
@@ -57,6 +59,8 @@ function ScanPulse({ label }: { label: string }) {
 
 export default function DiscoveryScreen() {
   const { t } = useTranslation();
+  const servers = useServers((s) => s.servers);
+  const { reconnectTo, busyId } = useServerConnect();
   const bottomInset = useBottomInset(16);
   const connect = useConnection((s) => s.connect);
   const [scanning, setScanning] = useState(false);
@@ -117,6 +121,11 @@ export default function DiscoveryScreen() {
       </View>
 
       <ScrollView className="flex-1" contentContainerStyle={{ gap: 12, paddingVertical: 8 }}>
+        {servers.length > 0 ? <AppText variant="title">{t('settings.savedServers')}</AppText> : null}
+        {servers.map((server) => (
+          <Button key={server.id} label={server.label} variant="secondary" leftIcon="server"
+            loading={busyId === server.id} disabled={busyId !== null} onPress={() => { abortRef.current?.abort(); void reconnectTo(server.id); }} />
+        ))}
         {found.map((instance) => (
           <ListRow
             key={instance.baseUrl}

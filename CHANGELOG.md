@@ -6,6 +6,19 @@ Android `versionCode` increases by 1 per release (0.9.0 = 2).
 
 ## [Unreleased]
 
+## [0.18.0] - 2026-11-03 (Beta)
+
+### Added
+- CI-gated automatic prerelease APK builds after version bumps, with fork-specific signing and in-app updates.
+- Remote HTTP/HTTPS domain connections with authenticated validation and saved-server reconnect on the start page.
+- Caddy Basic Auth support across session setup, API requests, streaming and first-party images.
+- Complete Simplified Chinese UI translation, automatic Chinese locale detection and persistent language selection.
+
+### Fixed
+- Existing mobile lint errors and warnings; slider callbacks now synchronize the last committed value after external updates.
+- Manual pairing no longer treats unverified Basic Auth credentials as a successful connection.
+- Proxy authentication errors now produce actionable localized messages, including non-JSON responses.
+
 ## [0.17.1] - 2026-10-19 (Beta)
 
 ### Fixed

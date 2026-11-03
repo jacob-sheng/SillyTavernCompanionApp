@@ -81,8 +81,38 @@ Two things to know about debug builds:
 ## Translations
 
 The UI has no hardcoded strings. Every user-facing string is a key in both
-`apps/mobile/src/i18n/locales/en.json` and `de.json`, with the same key path in each file, and is
-read through `t('namespace.key')`. A change that adds a string adds it to both files.
+`apps/mobile/src/i18n/locales/en.json`, `de.json` and `zh-CN.json`, with the same key path in each file, and is
+read through `t('namespace.key')`. A change that adds a string adds it to all three files. Translation tests check matching key paths and interpolation parameters.
+Chinese device locales map to `zh-CN`; explicit language choices survive restart.
+
+## Remote connection verification
+
+`normalizeServerUrl` accepts a root HTTP/HTTPS URL (bare domains default to HTTPS).
+`validateConnection` takes the URL, optional Basic Auth, injected fetch and optional AbortSignal;
+it validates `/version`, `/csrf-token` and `/api/characters/all` within a total 15-second budget.
+It returns the instance and the same authenticated `StClient` for activation. Typed error codes
+are translated in the mobile app. LAN discovery keeps its existing unauthenticated HTTP probe.
+`StClient.imageSource` supplies Basic Auth/cookies only for the exact server origin, without CSRF.
+All remote image surfaces use `ServerImage`; local image URIs and external hosts receive no headers.
+Credentials stay in SecureStore, outside the query cache.
+
+Unit tests cover URL normalization, HTML proxy errors, session reuse, UTF-8 Basic Auth,
+timeouts/cancellation, image origin checks, SSE headers, persistence and reconnect failures.
+Before calling a release verified on hardware, run this matrix on an Android device with the
+[Caddy configuration](../README.md#remote-vps-with-caddy--远程-vps-连接):
+
+- Connect over Wi-Fi and cellular data with valid credentials, then with a wrong password.
+- Load characters, user avatars, attachments and full-screen previews; confirm external images
+  still respect the media setting and never receive server credentials.
+- Read a chat, generate a streamed reply, stop generation and save/reload the conversation.
+- Restart the app, reconnect from saved servers, switch servers and replace expired credentials.
+- Switch between system/English/German/Simplified Chinese and restart; inspect Chinese text,
+  keyboard entry, long error messages and accessibility labels for clipping or missing glyphs.
+- Recheck local HTTP IP/port entry and local network discovery.
+
+Automated tests cannot establish TLS trust, native image transport or proxy streaming behavior on
+a real device; record live VPS/device results separately. No production VPS configuration is
+changed by the app or its tests.
 
 ## Release build
 
@@ -103,37 +133,36 @@ cd android
 
 Release builds use R8 minification.
 
-## Publishing a release
+## Publishing a prerelease
 
-Releases are automatic. Every change that users notice adds an entry under `[Unreleased]` in
-`CHANGELOG.md`. When CI passes on `main` and `[Unreleased]` has entries,
-`.github/workflows/auto-release.yml` runs `scripts/release/prepare.mjs`:
+This fork publishes prereleases from synchronized version bumps on `main`. It does not auto-bump
+versions merely because the changelog has unreleased entries. To prepare a release:
 
-- The next version is a minor step when `[Unreleased]` has an Added, Changed, Removed or
-  Deprecated section, else a patch step.
-- It bumps `version` in `apps/mobile/app.config.ts` and in the three `package.json` files, raises
-  `android.versionCode` by 1 and moves the `[Unreleased]` entries under the new version.
-- The workflow commits this as `chore(release): vX.Y.Z`, pushes the commit and the tag to `main`
-  and then runs `release.yml` for the tag.
+```sh
+pnpm release:bump --bump minor
+# or --bump patch; updates all three packages, app.config.ts and android.versionCode,
+# and moves the non-empty [Unreleased] entries into the new dated version section.
+pnpm release:check
+```
 
-An empty `[Unreleased]` section releases nothing. A major version, or a release without waiting for
-a merge, is started by hand: Actions > Auto release > Run workflow, or
-`gh workflow run auto-release.yml -f bump=major`. `node scripts/release/prepare.mjs --dry-run`
-prints the next version without changing files.
+Commit and push the changes to `main`. CI runs typecheck, tests, mobile lint and release metadata
+checks. After the exact commit passes, Auto release creates its `vX.Y.Z` tag and calls Release.
+A version that already has a tag is skipped, so normal commits do not rebuild published versions.
+If main advances before CI finishes, the newer commit must pass CI before it is released.
+Manual version edits must synchronize all four version fields and increase `android.versionCode`.
 
-A tag pushed by hand (`vX.Y.Z`, versions already bumped) still starts `release.yml` directly.
+Every release is a GitHub **prerelease**, including future versions above 1.0. Signed APKs are
+attached to the release; R8 mappings are stored as workflow artifacts. Release rechecks CI gates,
+the checked-out tag/version and the APK signing certificate before publishing. An existing tag
+is never moved. To retry a failed build, rerun the failed Actions job or dispatch Release with the
+existing `tag`. Auto release can also be dispatched for the current main version.
 
-`release.yml` checks that the tag matches the app version,
-builds the APK, fails if the APK is not signed with the release key, and creates a GitHub release
-with the APK attached. The release notes are the section for that version in `CHANGELOG.md`. The
-workflow needs the repo secrets `ANDROID_KEYSTORE_BASE64` and `STC_UPLOAD_*`. Starting it by hand
-(`workflow_dispatch`) builds the APK as a workflow artifact and creates no release.
+Required repository secrets: `ANDROID_KEYSTORE_BASE64`, `STC_UPLOAD_STORE_PASSWORD`,
+`STC_UPLOAD_KEY_ALIAS`, `STC_UPLOAD_KEY_PASSWORD`. Required repository variable:
+`ANDROID_SIGNING_CERT_SHA256` (64 hexadecimal characters, no colons). The fingerprint must match
+the fork's key; missing secrets or a debug-signed APK fail the release instead of publishing.
+Keep an offline backup of the keystore and passwords; keep using the same key for future updates.
 
-A tag run can only read caches, and only those of `main`. The workflow therefore also builds on
-`main` when the native setup changes (lockfile, `apps/mobile/package.json`, `app.config.ts`,
-`plugins/`, `modules/`, the workflow itself) and saves the Gradle cache, including the Gradle
-build cache. That run creates no release.
-
-Tags below `v1.0.0` and tags with a suffix (`v1.2.0-beta.1`) are published as pre-releases. The
-in-app updater reads the release list for that reason, not GitHub's "latest release", which skips
-pre-releases.
+The fork uses application ID `io.github.jacobsheng.stcompanion`, display name
+`SillyTavern Companion CN`, and the releases of `jacob-sheng/SillyTavernCompanionApp` for updates.
+It installs independently of the upstream app, whose signing key cannot be reused by this fork.

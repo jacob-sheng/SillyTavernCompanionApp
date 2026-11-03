@@ -405,7 +405,7 @@ async function* streamKobold(
   // Non-streaming (incl. the GUI preset, which has no streaming field): single POST. The
   // signal makes the stop button work here too; the post-await check discards a reply that
   // raced the user's stop.
-  const res = await client.post<{ results?: Array<{ text?: string }>; error?: unknown }>(
+  const res = await client.post<{ results?: { text?: string }[]; error?: unknown }>(
     req.url,
     req.body,
     opts.signal ? { signal: opts.signal } : undefined,

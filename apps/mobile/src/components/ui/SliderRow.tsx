@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, TextInput, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -48,18 +48,20 @@ export function SliderRow({
   const [editing, setEditing] = useState<string | null>(null);
   const shown = value ?? min;
   const pct = useSharedValue(clamp01((shown - min) / (max - min)));
-  const lastCommitted = useRef<number | null>(value);
+  const lastCommitted = useSharedValue<number | null>(value);
 
   useEffect(() => {
     pct.value = withTiming(clamp01((shown - min) / (max - min)), { duration: 80 });
   }, [shown, min, max, pct]);
 
+  useEffect(() => { lastCommitted.value = value; }, [value, lastCommitted]);
+
   const round = (v: number) => Number(v.toFixed(decimals));
 
   const commitPct = (p: number) => {
     const v = round(Math.min(max, Math.max(min, min + Math.round((clamp01(p) * (max - min)) / step) * step)));
-    if (v !== lastCommitted.current) {
-      lastCommitted.current = v;
+    if (v !== lastCommitted.value) {
+      lastCommitted.value = v;
       onChange(v);
     }
   };
@@ -69,13 +71,13 @@ export function SliderRow({
     const n = parseNum(s);
     if (n == null) return; // revert to last valid value
     const v = round(Math.min(hardMax, Math.max(hardMin, n)));
-    lastCommitted.current = v;
+    lastCommitted.value = v;
     onChange(v);
   };
 
   const nudge = (dir: 1 | -1) => {
     const v = round(Math.min(max, Math.max(min, shown + dir * step * 5)));
-    lastCommitted.current = v;
+    lastCommitted.value = v;
     onChange(v);
   };
 

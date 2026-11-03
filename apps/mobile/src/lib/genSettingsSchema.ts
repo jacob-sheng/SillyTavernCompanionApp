@@ -22,6 +22,8 @@ export interface GenFieldOption {
   value: number | string;
   /** Plain label (technical terms stay untranslated). */
   label: string;
+  /** Optional localized display label; API values remain unchanged. */
+  labelKey?: string;
 }
 
 export interface GenField {
@@ -111,7 +113,7 @@ export const GEN_FIELDS: GenField[] = [
   { key: 'dynatemp_exponent', target: 'textgen', mode: 'tc', section: 'dynatemp', type: 'slider', min: 0.01, max: 10, step: 0.01, decimals: 2, def: 1, showIf: { key: 'dynatemp', equals: true } },
 
   // ---- Mirostat (TC) ----
-  { key: 'mirostat_mode', target: 'textgen', mode: 'tc', section: 'mirostat', type: 'segmented', options: [{ value: 0, label: 'Off' }, { value: 1, label: 'V1' }, { value: 2, label: 'V2' }], def: 0, hint: true },
+  { key: 'mirostat_mode', target: 'textgen', mode: 'tc', section: 'mirostat', type: 'segmented', options: [{ value: 0, label: 'Off', labelKey: 'options.off' }, { value: 1, label: 'V1' }, { value: 2, label: 'V2' }], def: 0, hint: true },
   { key: 'mirostat_tau', target: 'textgen', mode: 'tc', section: 'mirostat', type: 'slider', min: 0, max: 20, step: 0.01, decimals: 2, def: 5, showIf: { key: 'mirostat_mode', equals: 'nonzero' } },
   { key: 'mirostat_eta', target: 'textgen', mode: 'tc', section: 'mirostat', type: 'slider', min: 0, max: 1, step: 0.01, decimals: 2, def: 0.1, showIf: { key: 'mirostat_mode', equals: 'nonzero' } },
 
@@ -143,20 +145,20 @@ export const GEN_FIELDS: GenField[] = [
   {
     key: 'names_behavior', target: 'oai', mode: 'cc', section: 'advanced', type: 'segmented', def: 0, hint: true,
     options: [
-      { value: -1, label: 'None' },
-      { value: 0, label: 'Default' },
-      { value: 1, label: 'Completion' },
-      { value: 2, label: 'Content' },
+      { value: -1, label: 'None', labelKey: 'options.none' },
+      { value: 0, label: 'Default', labelKey: 'options.default' },
+      { value: 1, label: 'Completion', labelKey: 'options.completion' },
+      { value: 2, label: 'Content', labelKey: 'options.content' },
     ],
   },
   {
     key: 'reasoning_effort', target: 'oai', mode: 'cc', section: 'advanced', type: 'segmented', def: 'medium',
     options: [
-      { value: 'auto', label: 'Auto' },
-      { value: 'low', label: 'Low' },
-      { value: 'medium', label: 'Med' },
-      { value: 'high', label: 'High' },
-      { value: 'max', label: 'Max' },
+      { value: 'auto', label: 'Auto', labelKey: 'options.auto' },
+      { value: 'low', label: 'Low', labelKey: 'options.low' },
+      { value: 'medium', label: 'Med', labelKey: 'options.medium' },
+      { value: 'high', label: 'High', labelKey: 'options.high' },
+      { value: 'max', label: 'Max', labelKey: 'options.max' },
     ],
   },
   { key: 'show_thoughts', target: 'oai', mode: 'cc', section: 'advanced', type: 'toggle', def: true },

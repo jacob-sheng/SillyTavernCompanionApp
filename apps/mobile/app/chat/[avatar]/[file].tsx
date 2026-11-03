@@ -1,8 +1,8 @@
+import { ServerImage } from '@/components/ServerImage';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
-  Image,
   Keyboard,
   Pressable,
   TextInput,
@@ -912,7 +912,7 @@ export default function ChatScreen() {
 
       {pendingImage && (
         <View className="flex-row items-center gap-3 border-t border-border bg-surface px-3 pt-2">
-          <Image source={{ uri: pendingImage }} style={{ width: 44, height: 44, borderRadius: 10 }} />
+          <ServerImage uri={pendingImage} style={{ width: 44, height: 44, borderRadius: 10 }} />
           <AppText variant="caption" color="muted" style={{ flex: 1 }}>
             {t('chat.imageAttached')}
           </AppText>
@@ -1236,7 +1236,7 @@ const Bubble = memo(function Bubble({
       className={`rounded-3xl px-4 py-2.5 ${isUser ? 'bg-user-bubble' : 'bg-char-bubble'} ${isHidden ? 'opacity-50' : ''}`}
     >
       {image ? (
-        <Image source={{ uri: image }} style={{ width: 200, height: 200, borderRadius: 14, marginBottom: text ? 8 : 0 }} resizeMode="cover" />
+        <ServerImage uri={image} style={{ width: 200, height: 200, borderRadius: 14, marginBottom: text ? 8 : 0 }} resizeMode="cover" />
       ) : null}
       {plain ? (
         <StreamingBubbleContent />

@@ -26,8 +26,25 @@ export interface StRequestInit {
 }
 
 function defaultBase64(input: string): string {
-  if (typeof btoa === 'function') return btoa(input);
+  if (typeof btoa === 'function') {
+    const bytes = new TextEncoder().encode(input);
+    return btoa(Array.from(bytes, (byte) => String.fromCharCode(byte)).join(''));
+  }
   return Buffer.from(input, 'utf-8').toString('base64');
+}
+
+export class StHttpError extends Error {
+  constructor(readonly status: number) {
+    super(`HTTP ${status}`);
+    this.name = 'StHttpError';
+  }
+}
+
+export class StProtocolError extends Error {
+  constructor() {
+    super('csrf-token response did not contain a token');
+    this.name = 'StProtocolError';
+  }
 }
 
 /**
@@ -65,9 +82,12 @@ export class StClient {
       headers: this.baseHeaders(),
     });
     this.cookies.ingestFromHeaders(res.headers);
-    const body = (await res.json()) as { token?: unknown };
-    if (typeof body.token !== 'string') {
-      throw new Error('csrf-token response did not contain a token');
+    if (!res.ok) throw new StHttpError(res.status);
+    let body: { token?: unknown } | null;
+    try { body = (await res.json()) as { token?: unknown } | null; }
+    catch { throw new StProtocolError(); }
+    if (!body || typeof body.token !== 'string') {
+      throw new StProtocolError();
     }
     this.csrfToken = body.token;
     return this.csrfToken;
@@ -144,6 +164,17 @@ export class StClient {
     if (cookie) headers['Cookie'] = cookie;
     if (this.authHeader) headers['Authorization'] = this.authHeader;
     return headers;
+  }
+
+  /** Only first-party image requests receive session credentials; never a CSRF token. */
+  imageSource(uri: string): { uri: string; headers?: Record<string, string> } {
+    try {
+      const target = new URL(uri, `${this.baseUrl}/`);
+      if (target.origin === new URL(this.baseUrl).origin && !target.username && !target.password) {
+        return { uri: target.href, headers: this.baseHeaders() };
+      }
+    } catch { /* Invalid/local image URIs are left to the image loader. */ }
+    return { uri };
   }
 
   private async toResponse<T>(res: {

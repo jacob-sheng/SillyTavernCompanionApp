@@ -173,11 +173,11 @@
   "formatting": {
     "context": "Context Template",
     "copyDefaultName": "{{name}} (Copy)",
-    "copySavedMessage": "\"{{name}}\" was saved on the PC. Use it as the active template now?",
+    "copySavedMessage": "\"{{name}}\" was saved on the server. Use it as the active template now?",
     "copySavedTitle": "Copy saved",
     "copyTitle": "Save as copy",
     "deleteBlocked": "This template is currently selected. Pick another one first, then delete it.",
-    "deleteConfirm": "Really delete \"{{name}}\"? The file is removed from the PC.",
+    "deleteConfirm": "Really delete \"{{name}}\"? The file is removed from the server.",
     "deleteFailed": "Template could not be deleted.",
     "deleteTitle": "Delete template",
     "edit": "Edit template",
@@ -232,7 +232,7 @@
     "missing": "Template not found.",
     "nameTaken": "A template with this name already exists.",
     "profileOverride": "Connection profile \"{{profile}}\" pins \"{{template}}\" - that template wins when generating.",
-    "savedNotice": "Changes are applied directly to SillyTavern (PC).",
+    "savedNotice": "Changes are applied directly to SillyTavern (server).",
     "saveFailed": "Template could not be saved. Is SillyTavern reachable?",
     "sections": {
       "assistant": "Assistant messages",
@@ -245,13 +245,13 @@
       "user": "User messages"
     },
     "selectedBadge": "active",
-    "selectFailed": "Could not sync to the PC.",
+    "selectFailed": "Could not sync to the server.",
     "sysprompt": "System Prompt",
     "template": "Template",
     "title": "Advanced formatting",
     "useCopy": "Select copy",
-    "writeWarning": "Saving overwrites the template file on the PC (data folder). \"Save as copy\" keeps the original untouched.",
-    "writeWarningTitle": "Save template to the PC?"
+    "writeWarning": "Saving overwrites the template file on the server (data folder). \"Save as copy\" keeps the original untouched.",
+    "writeWarningTitle": "Save template to the server?"
   },
   "genSettings": {
     "discardMessage": "Unsaved changes will be lost.",
@@ -353,7 +353,7 @@
       "xtc": "XTC"
     },
     "title": "All generation settings",
-    "writeWarning": "Changes are written to the settings on the PC (like the quick settings). Only changed fields are transferred.",
+    "writeWarning": "Changes are written to the settings on the server (like the quick settings). Only changed fields are transferred.",
     "writeWarningTitle": "Save to SillyTavern?"
   },
   "lock": {
@@ -373,13 +373,13 @@
   "onboarding": {
     "connect": "Connect",
     "connectionFailed": "Connection failed",
-    "findDescription": "Search the Wi-Fi network for a running instance. Your phone must be on the same network as the PC.",
+    "findDescription": "Scan your local Wi-Fi, reconnect to a saved server, or enter a remote HTTPS address.",
     "findTitle": "Find SillyTavern",
     "ipAddress": "IP address",
-    "manualDescription": "Enter the IP address and port of your SillyTavern instance.",
-    "manualPair": "Pair manually via IP",
+    "manualDescription": "Connect to a remote HTTPS server or a local SillyTavern instance. Enter Basic Auth credentials if required by Caddy or SillyTavern.",
+    "manualPair": "Connect manually",
     "manualTitle": "Pair manually",
-    "noInstanceFound": "No instance found. Pair manually via IP.",
+    "noInstanceFound": "No local instance found. Connect manually using a server URL or IP address.",
     "noLocalIp": "No local IP address - are you connected to Wi-Fi?",
     "notReachable": "No SillyTavern instance reachable at this address.",
     "password": "Password (optional)",
@@ -389,7 +389,12 @@
     "scanning": "Scanning network…",
     "scanningButton": "Scanning…",
     "tagline": "Your characters, on the go.",
-    "username": "Username (optional, for Basic Auth)"
+    "username": "Username (optional, for Basic Auth)",
+    "urlMode": "Server URL",
+    "lanMode": "Local IP + port",
+    "serverUrl": "Server URL",
+    "editConnection": "Edit connection",
+    "invalidCredentials": "Enter a username when using a password. Usernames must not contain colons or line breaks; passwords must not contain line breaks."
   },
   "personas": {
     "changePicture": "Change picture",
@@ -433,7 +438,7 @@
     "allSettings": "All generation settings",
     "contextSize": "Context size (tokens)",
     "responseLength": "Response length (tokens)",
-    "savedNotice": "Saved to SillyTavern (PC).",
+    "savedNotice": "Saved to SillyTavern (server).",
     "smoothStreaming": "Smooth streaming",
     "smoothStreamingHint": "App display only: text appears word by word.",
     "streaming": "Streaming",
@@ -488,7 +493,7 @@
     "security": "Security",
     "selectEllipsis": "Select…",
     "sillyTavern": "SillyTavern",
-    "syncToPc": "Sync with PC",
+    "syncToPc": "Sync with server",
     "syncToPcSubtitle": "Write persona/profile/sampler changes made on the phone back to SillyTavern.",
     "tapToConnect": "Tap to connect",
     "textCompletion": "Text completion",
@@ -508,5 +513,29 @@
     "characters": "Characters",
     "chats": "Chats",
     "settings": "Settings"
+  },
+  "connectionErrors": {
+    "invalidUrl": "Enter an HTTP/HTTPS server address without a path, query, fragment or embedded credentials.",
+    "unauthorized": "Authentication failed. Check your Basic Auth username and password.",
+    "forbidden": "Access denied. Check the Caddy rules and SillyTavern whitelist.",
+    "notSillyTavern": "This address did not return a usable SillyTavern session. Check the reverse proxy and whether account login is enabled.",
+    "timeout": "Connection timed out. Try again.",
+    "cancelled": "Connection cancelled.",
+    "network": "Could not connect. Check the address, network and TLS certificate.",
+    "server": "The server returned an HTTP error. Check the server and reverse proxy."
+  },
+  "options": {
+    "none": "None",
+    "groupsPast": "Groups & past",
+    "always": "Always",
+    "off": "Off",
+    "default": "Default",
+    "completion": "Completion",
+    "content": "Content",
+    "auto": "Auto",
+    "low": "Low",
+    "medium": "Med",
+    "high": "High",
+    "max": "Max"
   }
 }

@@ -24,7 +24,7 @@ type Flags = Omit<InlineSpan, 'text'>;
 
 // Quote pairs styled by desktop ST (script.js quote wrapping). German low quotes are
 // deliberately absent - desktop does not style them either.
-const QUOTE_PAIRS: ReadonlyArray<readonly [string, string]> = [
+const QUOTE_PAIRS: readonly (readonly [string, string])[] = [
   ['"', '"'],
   ['“', '”'], // curly double quotes
   ['«', '»'], // guillemets

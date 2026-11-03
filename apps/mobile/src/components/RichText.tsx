@@ -1,7 +1,9 @@
-import { memo, useState } from 'react';
-import { Image, Text, View, type TextStyle } from 'react-native';
+import { useConnection } from '@/stores/connectionStore';
+import { ServerImage } from '@/components/ServerImage';
+import { memo, useEffect, useState } from 'react';
+import { Text, View, type TextStyle } from 'react-native';
 import { parseInline, type InlineSpan } from '@/lib/inlineMarkup';
-import { isExternalUrl, splitImages } from '@/lib/markdownImages';
+import { splitImages } from '@/lib/markdownImages';
 import { colors, fonts } from '@/theme/tokens';
 
 /**
@@ -121,12 +123,14 @@ function logBlocked(url: string, reason: string) {
 }
 
 function MarkdownImage({ uri, alt }: { uri: string; alt: string }) {
+  const client = useConnection((s) => s.client);
   const [ratio, setRatio] = useState<number | null>(null);
   const [failed, setFailed] = useState(false);
+  useEffect(() => { setFailed(false); setRatio(null); }, [uri, client]);
   if (failed) return null;
   return (
-    <Image
-      source={{ uri }}
+    <ServerImage
+      uri={uri}
       accessibilityLabel={alt || undefined}
       resizeMode="contain"
       style={{ width: '100%', aspectRatio: ratio ?? 1, maxHeight: 480, borderRadius: 12, marginVertical: 4 }}
@@ -173,20 +177,19 @@ function InlineText({ text }: { text: string }) {
  * images, false drops them like desktop ST does. Without the prop, image markdown stays text.
  */
 function RichTextImpl({ text, externalMedia }: { text: string; externalMedia?: boolean }) {
+  const client = useConnection((s) => s.client);
   const blocks = parseBlocks(text, externalMedia !== undefined);
   return (
     <View>
       {blocks.map((b, i) => {
         switch (b.type) {
           case 'image':
-            if (!isExternalUrl(b.url)) {
-              logBlocked(b.url, 'relative URL');
-              return null;
-            }
-            if (!externalMedia) {
+            // First-party media is allowed even when external media is disabled.
+            if (!client?.imageSource(b.url).headers && !externalMedia) {
               logBlocked(b.url, 'external media forbidden in SillyTavern');
               return null;
             }
+            if (!/^(https?:|\/|[^:]+$)/i.test(b.url)) return null;
             return <MarkdownImage key={i} uri={b.url} alt={b.alt} />;
           case 'code':
             return (

@@ -23,10 +23,10 @@ const EXTRA_PROGUARD_RULES = `
  * (App-Store friendly, and tighter than NSAllowsArbitraryLoads).
  */
 const config: ExpoConfig = {
-  name: 'SillyTavern Companion',
+  name: 'SillyTavern Companion CN',
   slug: 'sillytavern-companion',
   scheme: 'stcompanion',
-  version: '0.17.1',
+  version: '0.18.0',
   orientation: 'portrait',
   userInterfaceStyle: 'dark',
   // New Architecture is the default (and only) arch on SDK 56 / RN 0.85, so an explicit
@@ -35,7 +35,7 @@ const config: ExpoConfig = {
   icon: './assets/icon.png',
   ios: {
     supportsTablet: true,
-    bundleIdentifier: 'de.tiretask.stcompanion',
+    bundleIdentifier: 'io.github.jacobsheng.stcompanion',
     infoPlist: {
       NSLocalNetworkUsageDescription:
         'Sucht im lokalen WLAN nach deiner laufenden SillyTavern-Instanz, um sich zu verbinden.',
@@ -45,8 +45,8 @@ const config: ExpoConfig = {
     },
   },
   android: {
-    package: 'de.tiretask.stcompanion',
-    versionCode: 19,
+    package: 'io.github.jacobsheng.stcompanion',
+    versionCode: 20,
     adaptiveIcon: {
       foregroundImage: './assets/adaptive-icon.png',
       monochromeImage: './assets/adaptive-icon-monochrome.png',

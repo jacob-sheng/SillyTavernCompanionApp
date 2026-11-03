@@ -1,5 +1,6 @@
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
+import { AndroidImportance } from 'expo-notifications';
 import i18n from '@/i18n';
 
 /**
@@ -30,8 +31,8 @@ async function ensureSetup(): Promise<boolean> {
     });
     if (Platform.OS === 'android') {
       await Notifications.setNotificationChannelAsync(CHANNEL_ID, {
-        name: 'Text-to-Speech',
-        importance: Notifications.AndroidImportance.LOW,
+        name: i18n.t('chat.readAloud'),
+        importance: AndroidImportance.LOW,
         sound: undefined,
         vibrationPattern: [0],
         showBadge: false,

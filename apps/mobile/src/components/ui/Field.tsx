@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
 import { Pressable, TextInput, View, type TextInputProps } from 'react-native';
 import { AppText } from './AppText';
@@ -14,6 +15,7 @@ export interface FieldProps extends Omit<TextInputProps, 'style' | 'placeholderT
 
 /** Labeled text input with helper/error text and an optional password toggle. */
 export function Field({ label, helper, error, password = false, ...input }: FieldProps) {
+  const { t } = useTranslation();
   const [hidden, setHidden] = useState(true);
   const showToggle = password;
 
@@ -40,6 +42,7 @@ export function Field({ label, helper, error, password = false, ...input }: Fiel
           <Pressable
             hitSlop={hitSlop}
             accessibilityRole="button"
+            accessibilityLabel={t('a11y.showPassword')}
             onPress={() => setHidden((h) => !h)}
             className="pl-2 active:opacity-60"
           >

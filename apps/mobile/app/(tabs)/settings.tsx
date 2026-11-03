@@ -1,3 +1,4 @@
+import { useServerConnect } from '@/hooks/useServerConnect';
 import { useEffect, useState } from 'react';
 import { Alert, ScrollView, Switch, View } from 'react-native';
 import { router } from 'expo-router';
@@ -71,24 +72,13 @@ export default function SettingsScreen() {
   const instance = useConnection((s) => s.instance);
   const disconnect = useConnection((s) => s.disconnect);
   const client = useConnection((s) => s.client);
-  const connect = useConnection((s) => s.connect);
   const syncToPc = useProfiles((s) => s.syncToPc);
   const setSyncToPc = useProfiles((s) => s.setSyncToPc);
   const servers = useServers((s) => s.servers);
-  const getCreds = useServers((s) => s.getCreds);
   const removeServer = useServers((s) => s.remove);
   const queryClient = useQueryClient();
 
-  const reconnectTo = async (id: string) => {
-    const srv = servers.find((s) => s.id === id);
-    if (!srv) return;
-    const creds = srv.hasAuth ? await getCreds(srv.id) : undefined;
-    connect(
-      { baseUrl: srv.baseUrl, ip: srv.ip, port: srv.port, version: instance?.version ?? '', source: 'manual' },
-      creds,
-    );
-    void queryClient.invalidateQueries();
-  };
+  const { reconnectTo, busyId } = useServerConnect();
   const {
     profiles,
     activeId,
@@ -178,9 +168,10 @@ export default function SettingsScreen() {
     { id: 'system', label: t('settings.languageSystem') },
     { id: 'de', label: 'Deutsch' },
     { id: 'en', label: 'English' },
+    { id: 'zh-CN', label: '简体中文' },
   ];
   const languageLabel =
-    langPref === 'de' ? 'Deutsch' : langPref === 'en' ? 'English' : t('settings.languageSystem');
+    languageOptions.find((option) => option.id === langPref)?.label ?? t('settings.languageSystem');
 
   const onPickProfile = (id: string) => {
     setActiveProfile(id);
@@ -409,7 +400,7 @@ export default function SettingsScreen() {
                     </View>
                     {!active ? (
                       <AppText variant="caption" color="muted" style={{ marginTop: 1 }}>
-                        {t('settings.tapToConnect')}
+                        {t(busyId === srv.id ? 'common.connecting' : 'settings.tapToConnect')}
                       </AppText>
                     ) : null}
                   </View>

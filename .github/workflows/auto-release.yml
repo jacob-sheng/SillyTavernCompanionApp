@@ -1,20 +1,12 @@
 name: Auto release
 
-# After CI passes on main: when CHANGELOG.md has [Unreleased] entries, bump the version, move the
-# entries under it, commit, tag and publish the APK. An empty [Unreleased] section releases nothing.
+# A new committed version is released only after the exact main commit passes CI.
 on:
   workflow_run:
     workflows: [CI]
     types: [completed]
     branches: [main]
-  # Manual release, for example to force a major version.
-  workflow_dispatch:
-    inputs:
-      bump:
-        description: Version step (auto reads the [Unreleased] sections)
-        type: choice
-        options: [auto, patch, minor, major]
-        default: auto
+  workflow_dispatch: {}
 
 concurrency:
   group: auto-release
@@ -30,52 +22,42 @@ jobs:
       (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
     runs-on: ubuntu-latest
     outputs:
-      tag: ${{ steps.commit.outputs.tag }}
+      tag: ${{ steps.tag.outputs.tag }}
     steps:
       - uses: actions/checkout@v4
         with:
           ref: main
           fetch-depth: 0
-
-      # The release commit goes on top of main. If main moved on since the CI run, the CI run of
-      # the newer commit releases instead.
-      - name: Check main is still the tested commit
-        id: head
-        if: github.event_name == 'workflow_run'
-        env:
-          TESTED: ${{ github.event.workflow_run.head_sha }}
-        run: |
-          if [ "$(git rev-parse HEAD)" != "$TESTED" ]; then
-            echo "::warning::main moved past $TESTED, the CI run of the newer commit releases instead"
-            echo "stale=true" >> "$GITHUB_OUTPUT"
-          fi
-
       - uses: actions/setup-node@v4
-        if: steps.head.outputs.stale != 'true'
         with:
           node-version: 22
-
-      - name: Bump version and CHANGELOG
-        id: prepare
-        if: steps.head.outputs.stale != 'true'
-        run: node scripts/release/prepare.mjs --bump "${{ inputs.bump || 'auto' }}"
-
-      - name: Commit, tag and push
-        id: commit
-        if: steps.prepare.outputs.tag != ''
+      - name: Check tested commit and publish new version tag
+        id: tag
         env:
-          TAG: ${{ steps.prepare.outputs.tag }}
+          TESTED: ${{ github.event.workflow_run.head_sha }}
+          EVENT_NAME: ${{ github.event_name }}
         run: |
-          if git rev-parse -q --verify "refs/tags/$TAG" > /dev/null; then
-            echo "::error::tag $TAG already exists"
-            exit 1
+          if [ "$EVENT_NAME" = workflow_run ] && [ "$(git rev-parse HEAD)" != "$TESTED" ]; then
+            echo '::notice::main moved since CI; the newer commit must pass CI first.'
+            exit 0
           fi
-          git config user.name DooDesch
-          git config user.email doodesch@gmail.com
-          git commit -am "chore(release): $TAG"
-          git tag -a "$TAG" -m "$TAG"
-          git push --atomic origin HEAD:main "$TAG"
-          echo "Pushed release commit $(git rev-parse --short HEAD) and tag $TAG"
+          node scripts/release/check.mjs
+          TAG="v$(node -p "require('./package.json').version")"
+          if git rev-parse -q --verify "refs/tags/$TAG" > /dev/null; then
+            if [ "$EVENT_NAME" != workflow_dispatch ]; then
+              echo "::notice::$TAG already tagged; no version bump to release."
+              exit 0
+            fi
+            if [ "$(git rev-list -n 1 "$TAG")" != "$(git rev-parse HEAD)" ]; then
+              echo '::error::Existing tag points elsewhere. Bump the version or rerun the failed Release job.'
+              exit 1
+            fi
+          else
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git tag -a "$TAG" -m "$TAG"
+            git push origin "$TAG"
+          fi
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
   release:

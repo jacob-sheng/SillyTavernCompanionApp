@@ -14,6 +14,8 @@ export interface TemplateFieldOption {
   value: string | number;
   /** Plain label (technical values stay untranslated). */
   label: string;
+  /** Optional localized display label; API values remain unchanged. */
+  labelKey?: string;
 }
 
 export interface TemplateField {
@@ -30,9 +32,9 @@ export interface TemplateField {
 }
 
 const NAMES_BEHAVIOR_OPTIONS: TemplateFieldOption[] = [
-  { value: 'none', label: 'None' },
-  { value: 'force', label: 'Groups & past' },
-  { value: 'always', label: 'Always' },
+  { value: 'none', label: 'None', labelKey: 'options.none' },
+  { value: 'force', label: 'Groups & past', labelKey: 'options.groupsPast' },
+  { value: 'always', label: 'Always', labelKey: 'options.always' },
 ];
 
 /** Editor fields per kind (desktop instruct defaults block, contextControls, sysprompt.js). */

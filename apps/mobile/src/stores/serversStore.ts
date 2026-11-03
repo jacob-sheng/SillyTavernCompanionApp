@@ -51,6 +51,9 @@ export const useServers = create<ServersState>((set, get) => ({
     const list = [...get().servers.filter((s) => s.id !== server.id), server];
     set({ servers: list });
     persistList(list);
+    if (!server.hasAuth) {
+      await Promise.all([secrets.remove(credUserKey(server.id)), secrets.remove(credPassKey(server.id))]).catch(() => {});
+    }
     if (creds) {
       await Promise.all([
         secrets.set(credUserKey(server.id), creds.user).catch(() => {}),
@@ -70,7 +73,7 @@ export const useServers = create<ServersState>((set, get) => ({
   getCreds: async (id) => {
     try {
       const [username, password] = await Promise.all([secrets.get(credUserKey(id)), secrets.get(credPassKey(id))]);
-      if (username && password) return { username, password };
+      if (username && password !== null) return { username, password };
     } catch {
       // ignore
     }
