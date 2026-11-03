@@ -1,8 +1,28 @@
 # 原生首页 + 现代化 WebView：Linux 续接交接
 
-更新时间：2026-11-03。**这是未完成的工作快照，不是可发布版本。**
-用户要求安全暂停，并将全部源码、文档和交接材料推到 GitHub，之后在 Linux 继续。
-此次交接允许提交和推送；不允许继续编译、测试、启动模拟器或发布。
+更新时间：2026-11-03。**这是未完成的开发分支，不是可发布版本。**
+用户已要求继续，开发恢复在 WSL2 Debian 的 `/home/ayang/src/SillyTavernCompanionApp`。
+构建和测试使用 Linux 文件系统；不要在 Windows 安装构建环境。
+
+## Linux 续接进度
+
+- 已从 GitHub 检出；使用现有 Linux JDK 21、Node 24 和 Android SDK。仓库内 Corepack
+  shim 固定 pnpm 10.23.0，避免现有全局 pnpm 11 被嵌套脚本误用。
+- WSL 镜像网络的 TUN 默认路径无法直连，测试过程通过现有本地 HTTP 代理设置进程环境；
+  没有改动 Windows/WSL 全局代理或系统路由。忽略的 `.cache/dev-env.sh` 只属于本机。
+- Linux 类型检查、481 项原有/交接单元测试、lint、发布工具检查通过。
+- 新增保存读回及角色刷新测试后，web-ui 为 14 项测试。实际酒馆 5 项浏览器回归通过。
+- 发现上游角色聊天的保存函数同样吞掉错误：现在角色/群聊均读回消息和插件元数据后
+  才确认返回首页，比较遵循 JSON 日期序列化；服务器保存失败不会被误认为成功。
+- 原生 WebView 补丁区分子 frame 导航与主页面外链，避免外部 iframe 自动唤起浏览器。
+- 新增独立 `Android hybrid acceptance` workflow，在开发分支运行隔离模拟器验证
+  原生连接、错误密码、流式聊天、保留实例，以及 Caddy 跨端口/外部 iframe/重定向认证。
+  此流程只使用 debug 签名，不发布 APK；首次运行结果仍待确认，当前 fixture 是 HTTP。
+- 本机 WSL 无可用 KVM，`modprobe kvm_amd` 返回 Operation not supported；安卓验收交由
+  GitHub Linux runner 的 KVM 模拟器。Linux SDK 新增组件和下载仍在 Linux 内进行。
+- graphify hook 在 WSL 同样不可用（离线执行返回 ENOTCACHED），既有图尚未刷新。
+
+以下保留首次交接时的范围和细节；旧暂停状态已由用户的继续指令解除。
 
 ## 分支与发布状态
 

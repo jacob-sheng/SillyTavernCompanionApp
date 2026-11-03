@@ -24,6 +24,7 @@ describe('Tavern navigation', () => {
     expect(ctx.openCharacterChat).not.toHaveBeenCalled();
   });
   it('preserves special characters and passes the browser CSRF session', async () => {
+    ctx.openCharacterChat = vi.fn(async file => { ctx.getCurrentChatId = () => file; });
     await adapter.navigate({ kind: 'character', avatar: '角色.png', action: 'continue', file: '故事 #1.jsonl' });
     expect(ctx.openCharacterChat).toHaveBeenCalledWith('故事 #1');
     expect(fetch).toHaveBeenCalledWith('/api/characters/chats', expect.objectContaining({ headers: { 'X-CSRF-Token': 'session' } }));
@@ -47,5 +48,30 @@ describe('Tavern navigation', () => {
     await expect(queue.run('1', mutate)).rejects.toThrow();
     await expect(queue.run('1', mutate)).rejects.toThrow();
     expect(mutate).toHaveBeenCalledTimes(1);
+  });
+  it('refreshes the retained character list before resolving an avatar', async () => {
+    module.getCharacters = vi.fn(async () => { ctx.characters = [{ avatar: 'new.png', name: 'same' }]; });
+    await expect(adapter.navigate({ kind: 'character', avatar: 'a.png', action: 'new' })).rejects.toThrow('missing');
+    expect(ctx.selectCharacterById).not.toHaveBeenCalled();
+    expect(module.doNewChat).not.toHaveBeenCalled();
+  });
+  it('does not acknowledge a historical chat that upstream failed to load', async () => {
+    await expect(adapter.navigate({ kind: 'character', avatar: 'a.png', action: 'continue', file: '故事 #1' })).rejects.toThrow('missing');
+  });
+  it('verifies persisted plugin state even when upstream silently swallows a save failure', async () => {
+    ctx.chat = [{ mes: 'new', variables: { health: 13 } }];
+    ctx.chatMetadata = { variables: { score: 4 } };
+    vi.mocked(fetch).mockResolvedValue({ ok: true, json: async () => [{ chat_metadata: ctx.chatMetadata }, { mes: 'old' }] } as Response);
+    await expect(adapter.leave(false)).rejects.toThrow('network');
+    expect(ctx.saveChat).toHaveBeenCalledOnce();
+  });
+  it('verifies group metadata as well as messages and tolerates reordered JSON keys', async () => {
+    ctx.groupId = 'group';
+    ctx.chat = [{ mes: 'saved', variables: { health: 13 }, gen_finished: new Date('2026-11-03T00:00:00Z') }];
+    ctx.chatMetadata = { variables: { score: 4 }, integrity: 'same' };
+    vi.mocked(fetch).mockResolvedValue({ ok: true, json: async () => [{ chat_metadata: { integrity: 'same', variables: { score: 4 } } }, { variables: { health: 13 }, mes: 'saved', gen_finished: '2026-11-03T00:00:00.000Z' }] } as Response);
+    await expect(adapter.leave(false)).resolves.toBeUndefined();
+    vi.mocked(fetch).mockResolvedValue({ ok: true, json: async () => [{ chat_metadata: { variables: { score: 3 } } }, ...ctx.chat] } as Response);
+    await expect(adapter.leave(false)).rejects.toThrow('network');
   });
 });

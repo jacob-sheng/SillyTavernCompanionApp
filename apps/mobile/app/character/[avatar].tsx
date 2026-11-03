@@ -190,7 +190,7 @@ export default function CharacterScreen() {
           </View>
         )}
 
-        <View className="gap-2"><Button label={t('tavern.continueChat')} onPress={() => useTavern.getState().open({ kind: 'character', avatar: avatarUrl, action: 'continue' })} /><Button label={t('character.newChat')} variant="secondary" leftIcon="plus" onPress={newChat} /><Button label={t('tavern.editCharacter')} variant="ghost" onPress={() => useTavern.getState().open({ kind: 'character', avatar: avatarUrl, action: 'edit' })} /></View>
+        <View className="gap-2"><Button testID="continue-chat" label={t('tavern.continueChat')} onPress={() => useTavern.getState().open({ kind: 'character', avatar: avatarUrl, action: 'continue' })} /><Button testID="new-chat" label={t('character.newChat')} variant="secondary" leftIcon="plus" onPress={newChat} /><Button label={t('tavern.editCharacter')} variant="ghost" onPress={() => useTavern.getState().open({ kind: 'character', avatar: avatarUrl, action: 'edit' })} /></View>
 
         <SectionHeader title={t('character.savedChats')} />
 

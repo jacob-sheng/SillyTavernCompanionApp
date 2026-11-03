@@ -25,6 +25,7 @@ const LABEL_COLOR: Record<Variant, TextColor> = {
 
 
 export interface ButtonProps {
+  testID?: string;
   label: string;
   onPress?: () => void;
   variant?: Variant;
@@ -37,6 +38,7 @@ export interface ButtonProps {
 }
 
 export function Button({
+  testID,
   label,
   onPress,
   variant = 'primary',
@@ -58,6 +60,7 @@ export function Button({
 
   return (
     <PressableScale
+      testID={testID}
       accessibilityRole="button"
       accessibilityState={{ disabled: isDisabled, busy: loading }}
       disabled={isDisabled}

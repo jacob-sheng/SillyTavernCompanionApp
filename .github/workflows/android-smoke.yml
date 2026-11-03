@@ -1,0 +1,94 @@
+name: Android hybrid acceptance
+
+on:
+  workflow_dispatch: {}
+  push:
+    branches: ['codex/hybrid-webview-*']
+    paths: ['apps/mobile/**', 'packages/web-ui/**', 'patches/**', 'scripts/android/**', '.github/workflows/android-smoke.yml', 'pnpm-lock.yaml']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-hybrid-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      CI: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v4
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm -r typecheck && pnpm --filter mobile lint
+      - run: pnpm --filter mobile prebuild --platform android
+      - name: Build debug APK (no release signing secrets)
+        working-directory: apps/mobile/android
+        run: chmod +x gradlew && ./gradlew :app:assembleDebug -PreactNativeArchitectures=x86_64 --max-workers=2
+      - run: pnpm --filter @st/web-ui exec playwright install --with-deps chromium
+      - name: Prepare isolated test services
+        run: |
+          mkdir -p .cache
+          git clone --depth 1 --branch 1.19.0 https://github.com/SillyTavern/SillyTavern.git .cache/SillyTavern
+          test "$(git -C .cache/SillyTavern rev-parse HEAD)" = 7e8663cd9c184a550b37238218bdd32c6efc68e9
+          npm ci --omit=dev --prefix .cache/SillyTavern
+          (cd .cache/SillyTavern && node server.js --port 8190 --browserLaunchEnabled false > ../tavern.log 2>&1) &
+          node packages/web-ui/e2e/model-server.mjs > .cache/model.log 2>&1 &
+          node scripts/android/hostile-server.mjs > .cache/hostile.log 2>&1 &
+          pnpm --filter mobile start --host localhost > .cache/metro.log 2>&1 &
+          HASH=$(docker run --rm caddy:2.11.7 caddy hash-password --plaintext stc-fixture-password)
+          cat > .cache/Caddyfile <<EOF
+          {
+              admin off
+              auto_https off
+          }
+          http://127.0.0.1:8191 {
+              basic_auth {
+                  fixture $HASH
+              }
+              handle /stc-test/redirect {
+                  redir http://127.0.0.1:8193/challenge?redirect
+              }
+              handle {
+                  reverse_proxy 127.0.0.1:8190
+              }
+          }
+          EOF
+          docker run -d --name stc-caddy --network host -v "$PWD/.cache/Caddyfile:/etc/caddy/Caddyfile:ro" caddy:2.11.7
+          for i in $(seq 1 60); do curl -fsS http://127.0.0.1:8190/version && curl -fsS http://127.0.0.1:8081/status && break || sleep 2; done
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          target: google_apis
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: |
+            adb install apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk
+            pnpm --filter @st/web-ui exec node e2e/android-smoke.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: android-hybrid-evidence
+          path: |
+            .cache/android-smoke
+            .cache/metro.log
+            .cache/tavern.log
+            apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk

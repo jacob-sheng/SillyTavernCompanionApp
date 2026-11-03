@@ -86,6 +86,7 @@ test('real streaming generation saves before returning home', async ({ page }) =
   await expect(page.locator('#chat .mes_text').last()).toContainText('stream completed successfully', { timeout: 30000 });
   await page.waitForFunction(async () => { const path = '/script.js'; return !(await import(/* @vite-ignore */ path)).isGenerating(); });
   await page.evaluate(() => (window as any).__STC_RECEIVE__({ version: 1, session: 'test', id: 'save-home', type: 'leave' }));
+  await expect.poll(() => page.evaluate(() => (window as any).messages.find((m: any) => m.type === 'navigationResult' && m.id === 'save-home'))).toMatchObject({ ok: true });
   await expect.poll(() => page.evaluate(() => (window as any).messages)).toContainEqual(expect.objectContaining({ type: 'openNativeHome' }));
 });
 test('unknown modern versions fail closed without hiding the original page', async ({ page }) => {

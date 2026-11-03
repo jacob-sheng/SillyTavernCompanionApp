@@ -96,7 +96,7 @@ export default function ManualScreen() {
           <Button label={t('onboarding.lanMode')} variant={mode === 'lan' ? 'primary' : 'secondary'} disabled={busy} onPress={() => setMode('lan')} />
         </View>
         {mode === 'url' ? (
-          <Field label={t('onboarding.serverUrl')} value={address} onChangeText={setAddress}
+          <Field testID="server-url" label={t('onboarding.serverUrl')} value={address} onChangeText={setAddress}
             editable={!busy} autoCapitalize="none" autoCorrect={false} keyboardType="url" placeholder="https://st.example.com" />
         ) : (
           <>
@@ -107,6 +107,7 @@ export default function ManualScreen() {
           </>
         )}
         <Field
+          testID="server-username"
           label={t('onboarding.username')}
           editable={!busy}
           value={user}
@@ -117,6 +118,7 @@ export default function ManualScreen() {
           placeholder="-"
         />
         <Field
+          testID="server-password"
           label={t('onboarding.password')}
           editable={!busy}
           value={pass}
@@ -129,7 +131,7 @@ export default function ManualScreen() {
         />
 
         <View className="mt-2">
-          <Button label={t('onboarding.connect')} leftIcon="link" loading={busy} onPress={onConnect} />
+          <Button testID="connect-server" label={t('onboarding.connect')} leftIcon="link" loading={busy} onPress={onConnect} />
         </View>
       </KeyboardAwareScrollView>
     </View>

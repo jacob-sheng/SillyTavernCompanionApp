@@ -32,6 +32,7 @@ export function Field({ label, helper, error, password = false, ...input }: Fiel
         }`}
       >
         <TextInput
+          accessibilityLabel={label}
           {...input}
           secureTextEntry={password ? hidden : input.secureTextEntry}
           placeholderTextColor={colors.textSubtle}

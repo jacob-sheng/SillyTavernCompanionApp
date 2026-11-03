@@ -1,5 +1,5 @@
 diff --git a/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewClient.java b/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewClient.java
-index 209b85525f0ceadae168b7575de00eafe4dba1d0..3ddc457f14aee55b277fc175cdd9260c35d02dd7 100644
+index 209b85525f0ceadae168b7575de00eafe4dba1d0..f9a00bbb6d86e421d53472dc6d325dc853b59354 100644
 --- a/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewClient.java
 +++ b/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewClient.java
 @@ -41,6 +41,36 @@ public class RNCWebViewClient extends WebViewClient {
@@ -54,7 +54,16 @@ index 209b85525f0ceadae168b7575de00eafe4dba1d0..3ddc457f14aee55b277fc175cdd9260c
          final RNCWebView rncWebView = (RNCWebView) view;
          final boolean isJsDebugging = rncWebView.getReactApplicationContext().getJavaScriptContextHolder().get() == 0;
  
-@@ -140,11 +178,20 @@ public class RNCWebViewClient extends WebViewClient {
+@@ -134,17 +172,29 @@ public class RNCWebViewClient extends WebViewClient {
+ 
+     @Override
+     public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
++        // Subframe navigation stays inside the page. Its resources still pass the
++        // exact-origin auth guard, but must not open an external browser on their own.
++        if (!request.isForMainFrame()) return false;
+         final String url = request.getUrl().toString();
+         return this.shouldOverrideUrlLoading(view, url);
+     }
  
      @Override
      public void onReceivedHttpAuthRequest(WebView view, HttpAuthHandler handler, String host, String realm) {
@@ -81,7 +90,7 @@ index 209b85525f0ceadae168b7575de00eafe4dba1d0..3ddc457f14aee55b277fc175cdd9260c
  
      @Override
 diff --git a/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt b/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt
-index f83033b3597a425da159555233bacce250ccfce0..9e807d004b245287a0c071253650e95abcd6847a 100644
+index f83033b3597a425da159555233bacce250ccfce0..fa6e6e48786a1efe7dd9d4476c139e4bc95ac113 100644
 --- a/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt
 +++ b/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt
 @@ -399,6 +399,7 @@ class RNCWebViewManagerImpl(private val newArch: Boolean = false) {

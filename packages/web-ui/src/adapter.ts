@@ -3,6 +3,7 @@ import type { NavigationTarget, Panel } from './protocol';
 export interface TavernContext {
   characters: { avatar: string; name: string; chat?: string }[];
   characterId?: number | string; groupId?: string; chat: unknown[];
+  chatMetadata?: Record<string, unknown>;
   eventTypes: Record<string, string>;
   eventSource: { on: (event: string, fn: (...args: unknown[]) => void) => void; removeListener: (event: string, fn: (...args: unknown[]) => void) => void };
   selectCharacterById: (id: number, options?: { switchMenu: boolean }) => Promise<void>;
@@ -13,7 +14,7 @@ export interface TavernContext {
   extensionSettings: { disabledExtensions?: string[] };
   getCurrentChatId: () => string | undefined;
 }
-export interface TavernModule { doNewChat: () => Promise<void>; isGenerating: () => boolean; isChatSaving: boolean; settingsReady?: boolean; doNavbarIconClick?: (this: HTMLElement) => Promise<void>; saveChat?: () => Promise<void> }
+export interface TavernModule { doNewChat: () => Promise<void>; isGenerating: () => boolean; isChatSaving: boolean; settingsReady?: boolean; doNavbarIconClick?: (this: HTMLElement) => Promise<void>; getCharacters?: () => Promise<void> }
 export const panelSelectors: Record<Exclude<Panel, 'chats'>, string> = {
   models: '#sys-settings-button', presets: '#ai-config-button', formatting: '#advanced-formatting-button',
   world: '#WI-SP-button', personas: '#persona-management-button', extensions: '#extensions-settings-button',
@@ -51,6 +52,7 @@ export class TavernAdapter {
       await this.closePanels();
       return;
     }
+    await this.module.getCharacters?.();
     let ctx = this.context();
     const id = ctx.characters.findIndex(c => c.avatar === target.avatar);
     if (id < 0) throw new Error('missing');
@@ -67,6 +69,7 @@ export class TavernAdapter {
     if (ctx.groupId || ctx.characters[Number(ctx.characterId)]?.avatar !== target.avatar) throw new Error('busy');
     if (target.action === 'new') await this.module.doNewChat();
     else if (file && ctx.getCurrentChatId() !== file) await ctx.openCharacterChat(file);
+    if (file && this.context().getCurrentChatId() !== file) throw new Error('missing');
     if (target.action === 'edit') await this.openPanel('characters');
     else if (target.action === 'manage') await this.openPanel('chats');
     else await this.closePanels();
@@ -99,17 +102,37 @@ export class TavernAdapter {
     // Editing controls stay mounted; leaving must not silently discard unfinished edits.
     if (document.querySelector('.mes .mes_edit_textarea') || document.querySelector('dialog[open]')) throw new Error('unsaved');
     const ctx = this.context();
-    if (ctx.groupId) {
+    if (ctx.groupId || ctx.characterId !== undefined) {
+      // Both upstream save functions swallow failures. Use the normal locking/debounce
+      // lifecycle, then read back messages AND plugin metadata before acknowledging leave.
       await ctx.saveChat();
-      // Upstream catches group save errors. Confirm persisted messages before hiding it.
-      const response = await fetch('/api/chats/group/get', { method: 'POST', headers: ctx.getRequestHeaders(), body: JSON.stringify({ id: ctx.getCurrentChatId() }) });
+      const character = ctx.characters[Number(ctx.characterId)];
+      const file = ctx.getCurrentChatId();
+      if (!file || (!ctx.groupId && !character)) throw new Error('missing');
+      const body = ctx.groupId ? { id: file } : { ch_name: character.name, avatar_url: character.avatar, file_name: file };
+      const response = await fetch(ctx.groupId ? '/api/chats/group/get' : '/api/chats/get', {
+        method: 'POST', headers: ctx.getRequestHeaders(), body: JSON.stringify(body),
+        cache: 'no-store', signal: AbortSignal.timeout(15000),
+      });
       if (!response.ok) throw new Error('network');
-      const saved = await response.json() as unknown[];
-      if (!Array.isArray(saved) || JSON.stringify(saved.slice(1)) !== JSON.stringify(ctx.chat)) throw new Error('network');
+      const saved = await response.json() as { chat_metadata?: Record<string, unknown> }[];
+      if (!Array.isArray(saved) || !sameJson(saved.slice(1), ctx.chat)
+        || (ctx.chatMetadata && !sameJson(saved[0]?.chat_metadata, ctx.chatMetadata))) throw new Error('network');
     }
-    else if (ctx.characterId !== undefined) await (this.module.saveChat ? this.module.saveChat() : ctx.saveChat());
     await this.idle();
   }
+}
+
+function sameJson(a: unknown, b: unknown): boolean {
+  const normalize = (value: unknown): unknown => Array.isArray(value) ? value.map(normalize)
+    : value && typeof value === 'object' ? Object.fromEntries(Object.entries(value).sort(([a], [b]) => a.localeCompare(b)).map(([key, item]) => [key, normalize(item)])) : value;
+  // Match the server wire format first: Tavern keeps Date objects in generated
+  // messages, while the JSONL readback necessarily contains ISO strings.
+  const canonical = (value: unknown) => {
+    const json = JSON.stringify(value);
+    return json === undefined ? undefined : JSON.stringify(normalize(JSON.parse(json)));
+  };
+  return canonical(a) === canonical(b);
 }
 
 /** A completed request is never replayed, including failed or partially completed mutations. */
